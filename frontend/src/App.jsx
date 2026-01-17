@@ -1,16 +1,18 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import { Auth0Provider } from '@auth0/auth0-react;'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import './App.css';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Auth0Provider
-      domain="dev-auxamjb2ab0y6cyh.us.auth0.com"
-      clientId="8yvpeSxHpnqEv2UIBVplGSDqlS7yxo9j"
-      authorizationParams={{ redirect_uri: window.location.origin }}
-    >
-      <App />
-    </Auth0Provider>
-  </StrictMode>,
-)
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
