@@ -11,6 +11,12 @@
   margin-bottom: 32px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .header-content h1 {
   margin: 0;
   font-size: 32px;
@@ -49,12 +55,449 @@
   font-size: 20px;
 }
 
+.google-signin-btn,
+.google-signout-btn {
+  background: white;
+  color: #333;
+  border: 2px solid #ddd;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.google-signin-btn {
+  border-color: #4285f4;
+  color: #4285f4;
+}
+
+.google-signin-btn:hover {
+  background: #4285f4;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.google-signout-btn {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.google-signout-btn:hover {
+  background: #dc3545;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.google-signin-btn span:first-child,
+.google-signout-btn span:first-child {
+  font-size: 20px;
+}
+
+.calendar-picker-wrapper {
+  position: relative;
+}
+
+.calendar-picker-btn {
+  background: white;
+  color: #333;
+  border: 2px solid #4285f4;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  min-width: 200px;
+}
+
+.calendar-picker-btn:hover {
+  background: #f8f9fa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-picker-btn span:first-child {
+  font-size: 18px;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.calendar-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.calendar-option:last-child {
+  border-bottom: none;
+}
+
+.calendar-option:hover {
+  background: #f8f9fa;
+}
+
+.calendar-option.selected {
+  background: #e3f2fd;
+  font-weight: 600;
+}
+
+.calendar-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #ddd;
+}
+
+.calendar-name {
+  flex: 1;
+  color: #333;
+  font-size: 14px;
+}
+
+.primary-badge {
+  background: #4285f4;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* Create Calendar Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.create-calendar-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.create-calendar-modal h2 {
+  margin: 0 0 16px 0;
+  font-size: 28px;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.create-calendar-modal p {
+  margin: 0 0 32px 0;
+  color: #666;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-btn.primary {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.modal-btn.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+.modal-btn.secondary {
+  background: white;
+  color: #666;
+  border: 2px solid #ddd;
+}
+
+.modal-btn.secondary:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.calendar-content.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
+
+.google-signin-prompt {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.prompt-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.google-signin-prompt h3 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.google-signin-prompt p {
+  margin: 0 0 32px 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.google-signin-btn-large {
+  background: #4285f4;
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.google-signin-btn-large:hover {
+  background: #357ae8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+}
+
+.google-signin-btn-large span:first-child {
+  font-size: 24px;
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
+
+.error-message {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.error-message h3 {
+  color: #dc3545;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.error-message p {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.error-message ol {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.error-message code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
 .calendar-content {
   background: white;
   border-radius: 16px;
   border: 2px solid #e5e5e5;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.calendar-error-banner {
+  background-color: #fee;
+  border: 2px solid #fcc;
+  color: #c33;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.calendar-error-banner span:first-child {
+  font-size: 20px;
+}
+
+.calendar-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 16px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #4285f4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.calendar-loading-overlay p {
+  margin-top: 16px;
+  color: #666;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 /* FullCalendar Custom Styling */
@@ -173,9 +616,23 @@
     align-items: flex-start;
   }
 
-  .create-event-btn {
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .create-event-btn,
+  .google-signin-btn,
+  .google-signout-btn,
+  .calendar-picker-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .calendar-picker-dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
   }
 
   .calendar-header h1 {
@@ -199,5 +656,17 @@
   .calendar-content .fc-button {
     padding: 6px 12px;
     font-size: 14px;
+  }
+
+  .create-calendar-modal {
+    padding: 32px 24px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-btn {
+    width: 100%;
   }
 }
