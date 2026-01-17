@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from typing import List
+from typing import List, Dict, Any
 from bson import ObjectId
 
 from ..models import Job, JobCreate, JobUpdate, MessageResponse
@@ -13,13 +13,13 @@ async def create_job(job: JobCreate):
     db = get_database()
     
     # Validate IDs
-    if not ObjectId.is_valid(job.user_id):
+    if not ObjectId.is_valid(job.userId):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid user ID format"
         )
     
-    if not ObjectId.is_valid(job.client_id):
+    if not ObjectId.is_valid(job.clientId):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid client ID format"
@@ -46,9 +46,9 @@ async def get_jobs(
     
     query = {}
     if user_id:
-        query["user_id"] = user_id
+        query["userId"] = user_id
     if client_id:
-        query["client_id"] = client_id
+        query["clientId"] = client_id
     if status_filter:
         query["status"] = status_filter
     
@@ -128,3 +128,101 @@ async def delete_job(job_id: str):
         )
     
     return {"message": f"Job {job_id} deleted successfully"}
+
+# ===== RELATIONSHIP ENDPOINTS =====
+
+@router.get("/{job_id}/details")
+async def get_job_details(job_id: str):
+    """Get job with full details including client, user, and invoice information"""
+    db = get_database()
+    
+    if not ObjectId.is_valid(job_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID format"
+        )
+    
+    # Get job
+    job = db.jobs.find_one({"_id": ObjectId(job_id)})
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
+    
+    # Get client details
+    client_details = None
+    if job.get("clientId"):
+        client = db.clients.find_one({"_id": ObjectId(job["clientId"])})
+        if client:
+            client_details = {
+                "_id": str(client["_id"]),
+                "name": client.get("name"),
+                "email": client.get("email"),
+                "address": client.get("address")
+            }
+    
+    # Get user details
+    user_details = None
+    if job.get("userId"):
+        user = db.users.find_one({"_id": ObjectId(job["userId"])})
+        if user:
+            user_details = {
+                "_id": str(user["_id"]),
+                "businessName": user.get("businessName"),
+                "businessEmail": user.get("businessEmail"),
+                "hourlyRate": user.get("hourlyRate")
+            }
+    
+    # Get invoice details if exists
+    invoice_details = None
+    if job.get("invoiceId"):
+        invoice = db.invoices.find_one({"_id": ObjectId(job["invoiceId"])})
+        if invoice:
+            invoice_details = {
+                "_id": str(invoice["_id"]),
+                "invoiceNumber": invoice.get("invoiceNumber"),
+                "status": invoice.get("status"),
+                "total": invoice.get("total"),
+                "issueDate": invoice.get("issueDate"),
+                "dueDate": invoice.get("dueDate")
+            }
+    
+    return {
+        "job": job,
+        "client": client_details,
+        "user": user_details,
+        "invoice": invoice_details
+    }
+
+@router.get("/{job_id}/invoice")
+async def get_job_invoice(job_id: str):
+    """Get the invoice associated with a job"""
+    db = get_database()
+    
+    if not ObjectId.is_valid(job_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID format"
+        )
+    
+    # Get job
+    job = db.jobs.find_one({"_id": ObjectId(job_id)})
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
+    
+    # Get invoice
+    if job.get("invoiceId"):
+        invoice = db.invoices.find_one({"_id": ObjectId(job["invoiceId"])})
+        if invoice:
+            return invoice
+    
+    # No invoice found
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="No invoice found for this job"
+    )
+

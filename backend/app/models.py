@@ -64,7 +64,7 @@ class UserUpdate(UserBase):
 class User(UserBase):
     """Complete user model with database fields"""
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    created_at: Optional[datetime] = None
+    createdAt: Optional[datetime] = None
     
     class Config:
         populate_by_name = True
@@ -89,13 +89,13 @@ class ClientBase(BaseModel):
     """Base client model"""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
-    user_id: Optional[str] = None  # Reference to user
+    userId: Optional[str] = None  # Reference to user
     address: Optional[str] = None
 
 class ClientCreate(ClientBase):
     """Model for creating a new client"""
     name: str  # Required
-    user_id: str  # Required - which user owns this client
+    userId: str  # Required - which user owns this client
 
 class ClientUpdate(ClientBase):
     """Model for updating a client"""
@@ -113,7 +113,7 @@ class Client(ClientBase):
             "example": {
                 "name": "Acme Corporation",
                 "email": "contact@acme.com",
-                "user_id": "user123",
+                "userId": "user123",
                 "address": "456 Business Ave, City, State"
             }
         }
@@ -123,19 +123,19 @@ class Client(ClientBase):
 
 class JobBase(BaseModel):
     """Base job model"""
-    user_id: Optional[str] = None
-    client_id: Optional[str] = None
+    userId: Optional[str] = None
+    clientId: Optional[str] = None
     title: Optional[str] = None
     status: Optional[str] = "pending"  # pending, in_progress, completed, cancelled
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    startTime: Optional[datetime] = None
+    endTime: Optional[datetime] = None
     location: Optional[str] = None
-    invoice_id: Optional[str] = None
+    invoiceId: Optional[str] = None
 
 class JobCreate(JobBase):
     """Model for creating a new job"""
-    user_id: str  # Required
-    client_id: str  # Required
+    userId: str  # Required
+    clientId: str  # Required
     title: str  # Required
 
 class JobUpdate(JobBase):
@@ -152,12 +152,12 @@ class Job(JobBase):
         json_encoders = {ObjectId: str}
         json_schema_extra = {
             "example": {
-                "user_id": "user123",
-                "client_id": "client456",
+                "userId": "user123",
+                "clientId": "client456",
                 "title": "Office Renovation",
                 "status": "in_progress",
-                "start_time": "2026-01-17T09:00:00",
-                "end_time": "2026-01-17T17:00:00",
+                "startTime": "2026-01-17T09:00:00",
+                "endTime": "2026-01-17T17:00:00",
                 "location": "123 Office St"
             }
         }
@@ -174,20 +174,20 @@ class LineItem(BaseModel):
 
 class InvoiceBase(BaseModel):
     """Base invoice model"""
-    user_id: Optional[str] = None
-    client_id: Optional[str] = None
-    job_id: Optional[str] = None
-    invoice_number: Optional[str] = None
+    userId: Optional[str] = None
+    clientId: Optional[str] = None
+    jobId: Optional[str] = None
+    invoiceNumber: Optional[str] = None
     status: Optional[str] = "draft"  # draft, sent, paid, overdue, cancelled
-    issue_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
-    line_items: Optional[List[LineItem]] = []
+    issueDate: Optional[datetime] = None
+    dueDate: Optional[datetime] = None
+    lineItems: Optional[List[LineItem]] = []
     total: Optional[float] = 0.0
 
 class InvoiceCreate(InvoiceBase):
     """Model for creating a new invoice"""
-    user_id: str  # Required
-    client_id: str  # Required
+    userId: str  # Required
+    clientId: str  # Required
 
 class InvoiceUpdate(InvoiceBase):
     """Model for updating an invoice"""
@@ -203,14 +203,14 @@ class Invoice(InvoiceBase):
         json_encoders = {ObjectId: str}
         json_schema_extra = {
             "example": {
-                "user_id": "user123",
-                "client_id": "client456",
-                "job_id": "job789",
-                "invoice_number": "INV-1001",
+                "userId": "user123",
+                "clientId": "client456",
+                "jobId": "job789",
+                "invoiceNumber": "INV-1001",
                 "status": "sent",
-                "issue_date": "2026-01-17",
-                "due_date": "2026-02-16",
-                "line_items": [
+                "issueDate": "2026-01-17",
+                "dueDate": "2026-02-16",
+                "lineItems": [
                     {
                         "description": "Labor - Office Renovation",
                         "quantity": 8,
