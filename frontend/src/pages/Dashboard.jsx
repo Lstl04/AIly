@@ -1,21 +1,22 @@
-import { useNavigate } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react'; 
 import './Dashboard.css';
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const { logout, user } = useAuth0();
 
   const handleLogout = () => {
-    // TODO: Replace with Auth0 logout later
-    navigate('/');
+    logout({ 
+      logoutParams: { returnTo: window.location.origin } 
+    });
   };
 
   return (
     <div className="dashboard-container">
       <nav className="dashboard-nav">
         <h1>💰 My Personal CFO</h1>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
       </nav>
 
       <div className="dashboard-content">
