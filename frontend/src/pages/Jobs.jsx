@@ -841,6 +841,7 @@ function Jobs() {
                           })}
                         </span>
                       </div>
+
                     </div>
 
                     {job.location && (

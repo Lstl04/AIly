@@ -374,9 +374,9 @@
     justify-content: center;
   }
 }
-
 @media (max-width: 480px) {
   .stats-section {
     grid-template-columns: 1fr;
   }
 }
+
