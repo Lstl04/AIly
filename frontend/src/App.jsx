@@ -11,6 +11,7 @@ import InvoicesSent from './pages/InvoicesSent';
 import InvoicesPaid from './pages/InvoicesPaid';
 import InvoicesOverdue from './pages/InvoicesOverdue';
 import Onboarding from './pages/Onboarding';
+import Expenses from './pages/Expenses';
 import './App.css';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/invoices/paid" element={<InvoicesPaid />} />
               <Route path="/invoices/overdue" element={<InvoicesOverdue />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/expenses" element={<Expenses />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

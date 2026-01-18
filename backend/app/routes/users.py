@@ -115,6 +115,20 @@ async def get_users(skip: int = 0, limit: int = 100):
     users = list(db.users.find().skip(skip).limit(limit))
     return users
 
+@router.get("/by-auth0/{auth0_id:path}", response_model=User)
+async def get_user_by_auth0(auth0_id: str):
+    """Get a user by their Auth0 ID (sub claim)"""
+    db = get_database()
+    
+    user = db.users.find_one({"auth0_id": auth0_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return user
+
 @router.get("/{user_id}", response_model=User)
 async def get_user(user_id: str):
     """Get a specific user by ID"""

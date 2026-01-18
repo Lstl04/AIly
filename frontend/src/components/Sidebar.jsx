@@ -204,6 +204,19 @@ function Sidebar({ user }) {
             </div>
           </button>
         </div>
+
+        {/* Expenses Section */}
+        <div className="sidebar-section">
+          <button 
+            className={`section-header ${location.pathname === '/expenses' ? 'active' : ''}`}
+            onClick={() => navigate('/expenses')}
+          >
+            <div className="section-title">
+              <span className="section-icon">🧾</span>
+              <span>Expenses</span>
+            </div>
+          </button>
+        </div>
         
       </nav>
 

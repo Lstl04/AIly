@@ -4,7 +4,7 @@ import logging
 
 from .database import db
 from .config import settings
-from .routes import users_router, clients_router, jobs_router, invoices_router
+from .routes import users_router, clients_router, jobs_router, invoices_router, expenses_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +57,7 @@ app.include_router(users_router, prefix="/api")
 app.include_router(clients_router, prefix="/api")
 app.include_router(jobs_router, prefix="/api")
 app.include_router(invoices_router, prefix="/api")
+app.include_router(expenses_router, prefix="/api")
 
 # Root endpoint
 @app.get("/")

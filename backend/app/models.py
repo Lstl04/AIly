@@ -228,6 +228,67 @@ class Invoice(InvoiceBase):
         }
 
 
+# ===== EXPENSE MODELS =====
+
+class ExpenseLineItem(BaseModel):
+    """Line item for an expense"""
+    description: str
+    quantity: float
+    unitPrice: float
+    total: float
+
+class ExpenseBase(BaseModel):
+    """Base expense model"""
+    userId: Optional[str] = None
+    vendorName: Optional[str] = None
+    date: Optional[datetime] = None
+    totalAmount: Optional[float] = None
+    taxAmount: Optional[float] = None
+    currency: Optional[str] = "USD"
+    lineItems: Optional[List[ExpenseLineItem]] = []
+    receiptImageUrl: Optional[str] = None
+    jobId: Optional[str] = None  # Optional link to job
+
+class ExpenseCreate(ExpenseBase):
+    """Model for creating a new expense"""
+    userId: str  # Required
+    vendorName: str  # Required
+    totalAmount: float  # Required
+
+class ExpenseUpdate(ExpenseBase):
+    """Model for updating an expense"""
+    pass
+
+class Expense(ExpenseBase):
+    """Complete expense model with database fields"""
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    createdAt: Optional[datetime] = None
+    
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        json_schema_extra = {
+            "example": {
+                "userId": "user123",
+                "vendorName": "Office Depot",
+                "date": "2026-01-17",
+                "totalAmount": 154.06,
+                "taxAmount": 9.06,
+                "currency": "USD",
+                "lineItems": [
+                    {
+                        "description": "Printer Paper",
+                        "quantity": 2,
+                        "unitPrice": 25.00,
+                        "total": 50.00
+                    }
+                ],
+                "jobId": "job789"
+            }
+        }
+
+
 # ===== RESPONSE MODELS =====
 
 class MessageResponse(BaseModel):

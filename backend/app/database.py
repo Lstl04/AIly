@@ -84,6 +84,11 @@ class Database:
     def invoices(self):
         """Get invoices collection"""
         return self.get_collection("invoices")
+    
+    @property
+    def expenses(self):
+        """Get expenses collection"""
+        return self.get_collection("expenses")
 
 # Global database instance
 db = Database()
