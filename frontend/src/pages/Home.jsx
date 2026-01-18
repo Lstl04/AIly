@@ -13,8 +13,12 @@ function Home() {
   useEffect(() => {
     const syncUser = async () => {
       try {
-        // 1. Get the Auth0 Token
-        const token = await getAccessTokenSilently();
+        // 1. Get the Auth0 Token with explicit audience
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: "https://personalcfo.com"
+          }
+        });
 
         // 2. Call the Backend "Sync" Endpoint
         const response = await fetch('http://127.0.0.1:8000/api/users/sync', {

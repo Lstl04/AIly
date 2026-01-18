@@ -28,7 +28,11 @@ function Onboarding() {
     setIsLoading(true);
 
     try {
-      const token = await getAccessTokenSilently();
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
 
       const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
         method: 'PUT',
@@ -43,7 +47,7 @@ function Onboarding() {
         throw new Error('Failed to update profile');
       }
 
-      navigate('/dashboard');
+      navigate('/');
 
     } catch (error) {
       console.error("Onboarding failed:", error);

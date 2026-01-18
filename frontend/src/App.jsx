@@ -3,7 +3,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Calendar from './pages/Calendar';
 import Jobs from './pages/Jobs';
@@ -29,7 +28,7 @@ function App() {
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/jobs" element={<Jobs />} />
