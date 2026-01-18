@@ -15,6 +15,7 @@ import Expenses from './pages/Expenses';
 import ClientsAll from './pages/ClientsAll';
 import ClientsActive from './pages/ClientsActive';
 import ClientsArchived from './pages/ClientsArchived';
+import AgentChat from './pages/Agent';
 import './App.css';
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/agent" element={<AgentChat />} />
             </Routes>
           </main>
         </div>
