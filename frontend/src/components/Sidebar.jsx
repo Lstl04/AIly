@@ -166,7 +166,7 @@ function Sidebar({ user }) {
     const interval = setInterval(() => {
       fetchInvoiceCounts();
       fetchClientCounts();
-    }, 5000); // Refresh every 5 seconds
+    }, 30000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
   }, [user, location.pathname]);
