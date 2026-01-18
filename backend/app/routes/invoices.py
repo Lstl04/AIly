@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from ..models import Invoice, InvoiceCreate, InvoiceUpdate, MessageResponse
 from ..database import get_database
 from ..email_service import send_invoice_email, send_payment_reminder
+from ..pdf_generator import generate_pdf_base64
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -431,11 +432,25 @@ async def update_invoice(invoice_id: str, invoice_update: InvoiceUpdate):
                     "address": user.get("businessAddress", "")
                 }
                 
+                # Generate PDF for email attachment
+                pdf_base64 = None
+                try:
+                    pdf_data = {
+                        "invoice": updated_invoice,
+                        "user": user,
+                        "client": client
+                    }
+                    pdf_base64 = generate_pdf_base64(pdf_data, user, client)
+                except Exception as e:
+                    print(f"[WARNING] Failed to generate PDF: {e}")
+                    # Continue without PDF attachment
+                
                 # Send email (async, don't block the response)
                 email_result = send_invoice_email(
                     invoice_data=invoice_data,
                     business_info=business_info,
-                    client_email=client.get("email")
+                    client_email=client.get("email"),
+                    pdf_base64=pdf_base64
                 )
                 
                 if not email_result.get("success"):

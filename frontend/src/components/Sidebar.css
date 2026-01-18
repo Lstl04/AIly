@@ -47,6 +47,17 @@
   background-clip: text;
 }
 
+.sidebar-header h2.logo-link {
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.sidebar-header h2.logo-link:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
 .user-name {
   margin: 0;
   font-size: 0.9em;

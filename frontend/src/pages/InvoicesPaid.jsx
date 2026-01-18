@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { generatePDF } from '../utils/pdfGenerator';
 import './Invoices.css';
 
 function InvoicesPaid() {
@@ -111,6 +112,35 @@ function InvoicesPaid() {
     setSelectedInvoice(null);
   };
 
+  const handleDownloadPDF = async (invoiceId) => {
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoice details');
+      }
+
+      const invoiceData = await response.json();
+      
+      // Generate and download PDF
+      generatePDF(invoiceData, invoiceData.user, invoiceData.client);
+
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="invoices-container">
@@ -129,10 +159,6 @@ function InvoicesPaid() {
           <h1>✅ Paid Invoices</h1>
           <p className="subtitle">View your paid invoices</p>
         </div>
-        <button className="create-invoice-btn">
-          <span>➕</span>
-          Create Invoice
-        </button>
       </div>
 
       {error && (
@@ -185,8 +211,11 @@ function InvoicesPaid() {
                 >
                   👁️ View
                 </button>
-                <button className="invoice-action-btn">
-                  📥 Download
+                <button 
+                  className="invoice-action-btn"
+                  onClick={() => handleDownloadPDF(invoice._id)}
+                >
+                  📥 Download PDF
                 </button>
               </div>
             </div>

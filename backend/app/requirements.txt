@@ -6,3 +6,5 @@ python-jose
 duckdb
 pandas
 requests
+python-multipart
+reportlab

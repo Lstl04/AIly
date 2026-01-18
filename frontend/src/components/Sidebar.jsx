@@ -161,7 +161,7 @@ function Sidebar({ user }) {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h2>💼 PersonalCFO</h2>
+        <h2 className="logo-link" onClick={() => navigate('/')}>💼 PersonalCFO</h2>
         <p className="user-name">{user?.name || user?.email || 'User'}</p>
       </div>
       
