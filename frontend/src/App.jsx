@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import Sidebar from './components/Sidebar';
+import AIly from './components/AIly';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -33,6 +34,7 @@ function App() {
       ) : (
         <div className="app-container">
           <Sidebar user={user} />
+          <AIly />
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Home />} />
