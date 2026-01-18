@@ -1,4 +1,5 @@
 import os
+from app.routes.invoices import create_invoice
 import duckdb
 import pandas as pd
 import requests
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 from app.api.dependencies import verify_token
 from app.database import get_database
 from bson import ObjectId
+from app.models import InvoiceCreate
 import time
 import json
 import shutil
@@ -101,10 +103,13 @@ class AgentRequest(BaseModel):
 @router.post("/chat")
 async def chat_with_gumloop_orchestrator(req: AgentRequest, token: dict = Depends(verify_token)):
     user_id = token.get("sub")
-
+    db = get_database()
+    user_id_db = db.users.find_one({"auth0_id": user_id})["_id"]
+    user_id_db = str(user_id_db)
     # 1. Send user message to Gumloop
     gumloop_response = trigger_gumloop_agent(req.message)
-    response = json.loads(gumloop_response)
+    clean_json_string = gumloop_response.replace('```json\n', '').replace('\n```', '').replace('```', '').strip()
+    response = json.loads(clean_json_string)
 
     # 2. Check the "to" field
     target = response.get("to")
@@ -119,6 +124,17 @@ async def chat_with_gumloop_orchestrator(req: AgentRequest, token: dict = Depend
         final_answer = trigger_gumloop_agent(f"USE THE APP NAVIGATION ROUTE FOR THIS: {req.message} was asked which generated this query: {sql_query} which had this result: {data_result}")
         response = json.loads(final_answer)
         return {"reply": response.get("message")}
+    elif target == "invoice_extractor":
+        new_invoice = InvoiceCreate(invoiceTitle=response.get("invoiceTitle"), 
+                                    invoiceDescription=response.get("invoiceDescription"), 
+                                    status="draft",
+                                    total=response.get("total"),
+                                    dueDate=response.get("dueDate"),
+                                    issueDate=response.get("issueDate"),
+                                    lineItems=response.get("lineItems"),
+                                    userId=ObjectId(user_id_db))
+        await create_invoice(invoice=new_invoice)
+        return {"reply": "Invoice has been created successfully."}
 
     # If it's for the user, just return the message directly
     print(response.get("message"))

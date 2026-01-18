@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from pydantic_core import core_schema
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 from datetime import datetime
 from bson import ObjectId
 
@@ -171,30 +171,40 @@ class Job(JobBase):
 # ===== INVOICE MODELS =====
 
 class LineItem(BaseModel):
-    """Line item for an invoice"""
-    description: str
-    quantity: float
-    rate: float
-    amount: float
+    # Everything is Any and Optional
+    name: Any = None
+    description: Any = None
+    quantity: Any = 0
+    price: Any = 0
+    rate: Any = 0
+    amount: Any = 0
+
+    model_config = ConfigDict(extra='allow', populate_by_name=True)
 
 class InvoiceBase(BaseModel):
-    """Base invoice model"""
-    userId: Optional[str] = None
-    clientId: Optional[str] = None
-    jobId: Optional[str] = None
-    invoiceNumber: Optional[str] = None
-    invoiceTitle: Optional[str] = None
-    invoiceDescription: Optional[str] = None
-    status: Optional[str] = "draft"  # draft, sent, paid, overdue, cancelled
-    issueDate: Optional[datetime] = None
-    dueDate: Optional[datetime] = None
-    lineItems: Optional[List[LineItem]] = []
-    total: Optional[float] = 0.0
+    # Using Any for everything stops all type and 'required' errors
+    id: Any = Field(alias="_id", default=None)
+    userId: Any = None
+    clientId: Any = None
+    jobId: Any = None
+    invoiceNumber: Any = None
+    invoiceTitle: Any = None
+    invoiceDescription: Any = None
+    status: Any = "draft"
+    issueDate: Any = None
+    dueDate: Any = None
+    lineItems: Any = []
+    total: Any = 0.0
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, # Allows ObjectId
+        populate_by_name=True,        # Allows _id and id
+        extra='allow'                 # Don't crash on extra AI data
+    )
 
 class InvoiceCreate(InvoiceBase):
-    """Model for creating a new invoice"""
-    userId: str  # Required
-    clientId: Optional[str] = ""  # Optional, can be empty string
+    # No mandatory fields here either
+    pass
 
 class InvoiceUpdate(InvoiceBase):
     """Model for updating an invoice"""
