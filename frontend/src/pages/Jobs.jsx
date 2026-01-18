@@ -4,6 +4,74 @@ import './Jobs.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
+// Helper function to create Google Calendar event
+const createGoogleCalendarEvent = async (job) => {
+  try {
+    // Get Google Calendar token and calendar ID from localStorage
+    const googleToken = localStorage.getItem('google_calendar_token');
+    const calendarId = localStorage.getItem('google_calendar_selected_id') || 'primary';
+    
+    if (!googleToken) {
+      console.log('Google Calendar not connected, skipping event creation');
+      return null;
+    }
+    
+    // Check if token is expired
+    const tokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+    if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
+      console.log('Google Calendar token expired, skipping event creation');
+      return null;
+    }
+    
+    // Only create event if job status is not "completed"
+    if (job.status === 'completed') {
+      console.log('Job is completed, skipping calendar event creation');
+      return null;
+    }
+    
+    // Prepare event data
+    const eventData = {
+      summary: job.title || 'Job',
+      description: `Job: ${job.title || 'Untitled'}`,
+      start: {
+        dateTime: job.startTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      end: {
+        dateTime: job.endTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      location: job.location || '',
+    };
+    
+    // Create event in Google Calendar
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    
+    if (response.ok) {
+      const event = await response.json();
+      console.log('Google Calendar event created:', event.id);
+      return event.id;
+    } else {
+      const errorData = await response.json();
+      console.error('Error creating Google Calendar event:', errorData);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error creating Google Calendar event:', error);
+    return null;
+  }
+};
+
 function Jobs() {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [plannedJobs, setPlannedJobs] = useState([]);
@@ -154,6 +222,16 @@ function Jobs() {
 
         const createdJob = await response.json();
         console.log('Job created:', createdJob);
+
+        // Create Google Calendar event if job is not completed
+        if (createdJob.status !== 'completed') {
+          try {
+            await createGoogleCalendarEvent(createdJob);
+          } catch (error) {
+            console.error('Failed to create Google Calendar event:', error);
+            // Don't fail the job creation if calendar event fails
+          }
+        }
 
         // Add to planned jobs list
         setPlannedJobs(prev => [...prev, createdJob]);

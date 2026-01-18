@@ -104,6 +104,19 @@ function Sidebar({ user }) {
       </div>
       
       <nav className="sidebar-nav">
+        {/* Jobs Section */}
+        <div className="sidebar-section">
+          <button 
+            className={`section-header ${location.pathname === '/jobs' ? 'active' : ''}`}
+            onClick={() => navigate('/jobs')}
+          >
+            <div className="section-title">
+              <span className="section-icon">🔧</span>
+              <span>Jobs</span>
+            </div>
+          </button>
+        </div>
+        
         {/* Invoices Section */}
         <div className="sidebar-section">
           <button 
@@ -206,18 +219,7 @@ function Sidebar({ user }) {
           </button>
         </div>
 
-        {/* Jobs Section */}
-        <div className="sidebar-section">
-          <button 
-            className={`section-header ${location.pathname === '/jobs' ? 'active' : ''}`}
-            onClick={() => navigate('/jobs')}
-          >
-            <div className="section-title">
-              <span className="section-icon">🔧</span>
-              <span>Jobs</span>
-            </div>
-          </button>
-        </div>
+    
 
         {/* Expenses Section */}
         <div className="sidebar-section">
