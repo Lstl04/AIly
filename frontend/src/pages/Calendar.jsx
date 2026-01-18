@@ -394,13 +394,13 @@ function CalendarContent() {
     <div className="calendar-container">
       <div className="calendar-header">
         <div className="header-content">
-          <h1>📅 Calendar</h1>
+          <h1> Calendar</h1>
           <p className="subtitle">View and manage your Google Calendar</p>
         </div>
         <div className="header-actions">
           {!isGoogleSignedIn ? (
             <button className="google-signin-btn" onClick={handleGoogleSignIn}>
-              <span>🔗</span>
+              <span></span>
               Connect Google Calendar
             </button>
           ) : (
@@ -410,7 +410,7 @@ function CalendarContent() {
                   className="calendar-picker-btn"
                   onClick={() => setShowCalendarPicker(!showCalendarPicker)}
                 >
-                  <span>📋</span>
+                  <span></span>
                   {getSelectedCalendarName()}
                   <span className="dropdown-arrow">▼</span>
                 </button>
@@ -436,8 +436,8 @@ function CalendarContent() {
               </div>
               
               <button className="google-signout-btn" onClick={handleGoogleSignOut}>
-                <span>🔓</span>
-                Disconnect
+                <span>Disconnect</span>
+                
               </button>
             </>
           )}
@@ -456,7 +456,7 @@ function CalendarContent() {
       {showCreateCalendarModal && (
         <div className="modal-overlay">
           <div className="create-calendar-modal">
-            <div className="modal-icon">📅</div>
+            <div className="modal-icon"></div>
             <h2>Create PersonalCFO Calendar?</h2>
             <p>
               Would you like to create a dedicated calendar for PersonalCFO?
@@ -492,7 +492,7 @@ function CalendarContent() {
       {!isGoogleSignedIn ? (
         <div className="calendar-content empty-state">
           <div className="google-signin-prompt">
-            <div className="prompt-icon">📅</div>
+            <div className="prompt-icon"></div>
             <h3>Connect Your Google Calendar</h3>
             <p>Sign in with Google to view and manage your calendar events</p>
             <button className="google-signin-btn-large" onClick={handleGoogleSignIn}>
@@ -546,16 +546,16 @@ function Calendar() {
     return (
       <div className="calendar-container">
         <div className="calendar-header">
-          <h1>📅 Calendar</h1>
+          <h1> Calendar</h1>
         </div>
         <div className="calendar-content error-state">
           <div className="error-message">
             <h3>⚠️ Configuration Required</h3>
             <p>Please set up your Google Calendar API credentials:</p>
-            <ol style={{ textAlign: 'left', maxWidth: '500px', margin: '20px auto' }}>
+            <ol>
               <li>Create a <code>.env</code> file in the frontend directory</li>
               <li>Add your credentials:
-                <pre style={{ background: '#f5f5f5', padding: '10px', marginTop: '10px', borderRadius: '4px' }}>
+                <pre>
 {`VITE_GOOGLE_CLIENT_ID=your_client_id
 VITE_GOOGLE_API_KEY=your_api_key`}
                 </pre>

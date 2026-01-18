@@ -162,7 +162,7 @@ function InvoicesPaid() {
     <div className="invoices-container">
       <div className="invoices-header">
         <div className="header-content">
-          <h1>✅ Paid Invoices</h1>
+          <h1>Paid Invoices</h1>
           <p className="subtitle">View your paid invoices</p>
         </div>
       </div>
@@ -184,7 +184,7 @@ function InvoicesPaid() {
             <div key={invoice._id} className="invoice-card">
               <div className="invoice-card-header">
                 <div className="invoice-number">
-                  <span className="invoice-icon">📄</span>
+                  <span className="invoice-icon"></span>
                   <h3>{invoice.invoiceNumber}</h3>
                 </div>
                 <div className="invoice-status status-paid">
@@ -194,17 +194,17 @@ function InvoicesPaid() {
 
               <div className="invoice-card-body">
                 <div className="invoice-amount">
-                  <span className="amount-label">Total Amount</span>
+                  <span className="amount-label">Total Amount: </span>
                   <span className="amount-value">{formatCurrency(invoice.total)}</span>
                 </div>
 
                 <div className="invoice-dates">
                   <div className="date-item">
-                    <span className="date-label">Issue Date:</span>
+                    <span className="date-label">Issue Date: </span>
                     <span className="date-value">{formatDate(invoice.issueDate)}</span>
                   </div>
                   <div className="date-item">
-                    <span className="date-label">Due Date:</span>
+                    <span className="date-label">Due Date: </span>
                     <span className="date-value">{formatDate(invoice.dueDate)}</span>
                   </div>
                 </div>
@@ -215,13 +215,13 @@ function InvoicesPaid() {
                   className="invoice-action-btn"
                   onClick={() => handleViewInvoice(invoice._id)}
                 >
-                  👁️ View
+                  View
                 </button>
                 <button 
                   className="invoice-action-btn"
                   onClick={() => handleDownloadPDF(invoice._id)}
                 >
-                  📥 Download PDF
+                  Download PDF
                 </button>
               </div>
             </div>

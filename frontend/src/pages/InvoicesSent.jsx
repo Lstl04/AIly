@@ -218,7 +218,7 @@ function InvoicesSent() {
     <div className="invoices-container">
       <div className="invoices-header">
         <div className="header-content">
-          <h1>📤 Sent Invoices</h1>
+          <h1>Sent Invoices</h1>
           <p className="subtitle">Track your sent invoices</p>
         </div>
       </div>
@@ -240,7 +240,7 @@ function InvoicesSent() {
             <div key={invoice._id} className="invoice-card">
               <div className="invoice-card-header">
                 <div className="invoice-number">
-                  <span className="invoice-icon">📄</span>
+                  <span className="invoice-icon"></span>
                   <h3>{invoice.invoiceNumber}</h3>
                 </div>
                 <div className="invoice-status status-sent">
@@ -250,17 +250,17 @@ function InvoicesSent() {
 
               <div className="invoice-card-body">
                 <div className="invoice-amount">
-                  <span className="amount-label">Total Amount</span>
+                  <span className="amount-label">Total Amount: </span>
                   <span className="amount-value">{formatCurrency(invoice.total)}</span>
                 </div>
 
                 <div className="invoice-dates">
                   <div className="date-item">
-                    <span className="date-label">Issue Date:</span>
+                    <span className="date-label">Issue Date: </span>
                     <span className="date-value">{formatDate(invoice.issueDate)}</span>
                   </div>
                   <div className="date-item">
-                    <span className="date-label">Due Date:</span>
+                    <span className="date-label">Due Date: </span>
                     <span className="date-value">{formatDate(invoice.dueDate)}</span>
                   </div>
                 </div>
@@ -271,19 +271,19 @@ function InvoicesSent() {
                   className="invoice-action-btn"
                   onClick={() => handleMarkPaid(invoice._id)}
                 >
-                  <span>✅</span> Mark Paid
+                  <span>Mark Paid</span>
                 </button>
                 <button 
                   className="invoice-action-btn"
                   onClick={() => handleViewInvoice(invoice._id)}
                 >
-                  👁️ View
+                  View
                 </button>
                 <button 
                   className="invoice-action-btn"
                   onClick={() => handleDownloadPDF(invoice._id)}
                 >
-                  📥 Download PDF
+                  Download PDF
                 </button>
               </div>
             </div>

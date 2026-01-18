@@ -16,11 +16,18 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>💰 My Personal CFO</h1>
-        <p>Your AI-powered financial assistant</p>
+        <div className="login-header">
+          <h1>AIly</h1>
+          <p className="login-subtitle">Your AI-powered financial assistant</p>
+        </div>
         <button onClick={() => loginWithRedirect()} className="login-button">
           Log In / Sign Up
         </button>
+        {error && (
+          <div className="login-error">
+            Authentication error. Please try again.
+          </div>
+        )}
       </div>
     </div>
   );

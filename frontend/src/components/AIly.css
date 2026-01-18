@@ -104,6 +104,32 @@
   color: #38bdf8;
 }
 
+.icon-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+}
+
+.icon-btn:hover {
+  background: #334155;
+  border-color: #475569;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
 .ailly-controls {
   padding: 16px;
   background: #0f172a;

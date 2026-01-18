@@ -908,7 +908,7 @@ function InvoicesDrafts() {
     <div className="invoices-container">
       <div className="invoices-header">
         <div className="header-content">
-          <h1>📝 Draft Invoices</h1>
+          <h1>Draft Invoices</h1>
           <p className="subtitle">Manage your draft invoices</p>
         </div>
         <button className="create-invoice-btn" onClick={() => setShowCreateModal(true)}>
@@ -934,7 +934,7 @@ function InvoicesDrafts() {
             <div key={invoice._id} className="invoice-card">
               <div className="invoice-card-header">
                 <div className="invoice-number">
-                  <span className="invoice-icon">📄</span>
+                  <span className="invoice-icon"></span>
                   <h3>{invoice.invoiceNumber || 'Draft'}</h3>
                 </div>
                 <div className="invoice-status status-draft">
@@ -944,17 +944,17 @@ function InvoicesDrafts() {
 
               <div className="invoice-card-body">
                 <div className="invoice-amount">
-                  <span className="amount-label">Total Amount</span>
+                  <span className="amount-label">Total Amount: </span>
                   <span className="amount-value">{formatCurrency(invoice.total)}</span>
                 </div>
 
                 <div className="invoice-dates">
                   <div className="date-item">
-                    <span className="date-label">Issue Date:</span>
+                    <span className="date-label">Issue Date: </span>
                     <span className="date-value">{formatDate(invoice.issueDate)}</span>
                   </div>
                   <div className="date-item">
-                    <span className="date-label">Due Date:</span>
+                    <span className="date-label">Due Date: </span>
                     <span className="date-value">{formatDate(invoice.dueDate)}</span>
                   </div>
                 </div>
@@ -965,7 +965,7 @@ function InvoicesDrafts() {
                   className="invoice-action-btn"
                   onClick={() => handleSendInvoice(invoice._id)}
                 >
-                  <span>📤</span> Send
+                  <span>Send</span>
                 </button>
                 <button 
                   className="invoice-action-btn"
@@ -983,19 +983,19 @@ function InvoicesDrafts() {
                     }
                   }}
                 >
-                  ✏️ Edit
+                  Edit
                 </button>
                 <button 
                   className="invoice-action-btn"
                   onClick={() => handleDownloadPDF(invoice._id)}
                 >
-                  📥 Download PDF
+                  Download PDF
                 </button>
                 <button 
                   className="invoice-action-btn delete"
                   onClick={() => handleDeleteInvoice(invoice._id)}
                 >
-                  🗑️ Delete
+                  Delete
                 </button>
               </div>
             </div>
@@ -1015,7 +1015,7 @@ function InvoicesDrafts() {
             </div>
 
             {loadingInvoice ? (
-              <div className="invoice-form" style={{ padding: '40px', textAlign: 'center' }}>
+              <div className="loading-state">
                 <div className="spinner"></div>
                 <p>Loading invoice data...</p>
               </div>
@@ -1069,7 +1069,6 @@ function InvoicesDrafts() {
                           }
                         }}
                         disabled={loadingJobs}
-                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
                       >
                         <option value="">-- Select a job (optional) --</option>
                         {loadingJobs ? (
@@ -1086,14 +1085,13 @@ function InvoicesDrafts() {
                       </select>
                     </div>
 
-                    <button
+                      <button
                       type="button"
                       className="btn-create-new-job"
                       onClick={() => {
                         setShowCreateNewJob(true);
                         setFormData(prev => ({ ...prev, selectedJobId: '' }));
                       }}
-                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
                     >
                       + Create New Job
                     </button>
@@ -1133,14 +1131,13 @@ function InvoicesDrafts() {
                           jobDescription: ''
                         }));
                       }}
-                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
                     >
                       Cancel - Select Existing Job
                     </button>
                   </>
                 )}
 
-                <div className="form-group" style={{ marginTop: '20px' }}>
+                <div className="form-group">
                   <label>Hours Worked</label>
                   <input
                     type="number"
@@ -1158,7 +1155,7 @@ function InvoicesDrafts() {
               <div className="form-section">
                 <h3>Client Information</h3>
                 {editingInvoiceId && !clientInfo && (
-                  <div className="info-banner" style={{ marginBottom: '16px', padding: '12px', background: '#fff3cd', borderRadius: '8px', color: '#856404' }}>
+                  <div className="info-banner">
                     <span>ℹ️</span> Client information not available for this invoice. Fields are disabled.
                   </div>
                 )}
@@ -1173,7 +1170,6 @@ function InvoicesDrafts() {
                         onChange={handleInputChange}
                         required={!editingInvoiceId}
                         disabled={!!editingInvoiceId || loadingClients}
-                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
                       >
                         <option value="">-- Select a client --</option>
                         {loadingClients ? (
@@ -1199,7 +1195,6 @@ function InvoicesDrafts() {
                           setShowCreateNewClient(true);
                           setFormData(prev => ({ ...prev, selectedClientId: '' }));
                         }}
-                        style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
                       >
                         + Add New Client
                       </button>
@@ -1253,7 +1248,6 @@ function InvoicesDrafts() {
                           clientAddress: ''
                         }));
                       }}
-                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
                     >
                       Cancel - Select Existing Client
                     </button>

@@ -667,7 +667,7 @@ function Jobs() {
     <div className="jobs-container">
       <div className="jobs-header">
         <div className="header-content">
-          <h1>🔧 Jobs</h1>
+          <h1>Jobs</h1>
           <p className="subtitle">Manage and track your jobs</p>
         </div>
         <button className="create-job-btn" onClick={openCreateModal}>
@@ -682,7 +682,7 @@ function Jobs() {
           className={`tab-btn ${activeTab === 'planned' ? 'active' : ''}`}
           onClick={() => setActiveTab('planned')}
         >
-          <span className="tab-icon">📋</span>
+          <span className="tab-icon"></span>
           Planned Jobs
           <span className="tab-count">{plannedJobs.length}</span>
         </button>
@@ -690,7 +690,7 @@ function Jobs() {
           className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
           onClick={() => setActiveTab('past')}
         >
-          <span className="tab-icon">✅</span>
+          <span className="tab-icon"></span>
           Past Jobs
           <span className="tab-count">{pastJobs.length}</span>
         </button>
@@ -715,7 +715,7 @@ function Jobs() {
                 <div key={job._id} className="job-card">
                   <div className="job-card-header">
                     <div className="job-title">
-                      <span className="job-icon">🔧</span>
+                      <span className="job-icon"></span>
                       <h3>{job.title}</h3>
                     </div>
                     <div className={`job-status status-${job.status}`}>
@@ -983,7 +983,7 @@ function Jobs() {
                 <small className="field-hint">Optional: For your planning reference</small>
               </div>
 
-              <div className="form-group">
+              <div className="form-group checkbox-group">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"

@@ -120,6 +120,8 @@
 .empty-state {
   padding: 20px 0;
   width: 100%;
+  color: white;
+  
 }
 
 .empty-state p {
@@ -339,7 +341,7 @@
 }
 
 .job-modal {
-  background: white;
+  background: #1e293b;
   border-radius: 16px;
   width: 90%;
   max-width: 600px;
@@ -347,6 +349,7 @@
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  color: #f8fafc;
 }
 
 @keyframes slideUp {
@@ -365,10 +368,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px 32px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #334155;
   position: sticky;
   top: 0;
-  background: white;
+  background: #1e293b;
   border-radius: 16px 16px 0 0;
   z-index: 10;
 }
@@ -376,7 +379,7 @@
 .modal-header h2 {
   margin: 0;
   font-size: 24px;
-  color: #1a1a1a;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -384,7 +387,7 @@
   background: none;
   border: none;
   font-size: 32px;
-  color: #666;
+  color: #94a3b8;
   cursor: pointer;
   padding: 0;
   width: 40px;
@@ -397,8 +400,8 @@
 }
 
 .close-btn:hover {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #334155;
+  color: #ffffff;
 }
 
 .job-form {
@@ -432,19 +435,27 @@
   margin-bottom: 24px;
 }
 
+.form-group.checkbox-group {
+  margin-bottom: 16px;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   font-size: 14px;
+}
+
+.form-group.checkbox-group label {
+  margin-bottom: 0;
 }
 
 .field-hint {
   display: block;
   margin-top: 6px;
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
   font-style: italic;
 }
 
@@ -452,26 +463,30 @@
 .form-group textarea {
   width: 100%;
   padding: 12px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid #334155;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s;
   box-sizing: border-box;
+  background-color: #0f172a;
+  color: #ffffff;
 }
 
 .form-group input:disabled,
 .form-group textarea:disabled {
-  background-color: #f5f5f5;
+  background-color: #1e293b;
   cursor: not-allowed;
   opacity: 0.7;
+  border-color: #334155;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  background-color: #0f172a;
 }
 
 .form-group textarea {
@@ -482,20 +497,38 @@
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   font-size: 14px;
-  margin-bottom: 0;
+  margin: 0;
+  padding: 0;
+  user-select: none;
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   cursor: pointer;
-  accent-color: #4a90e2;
+  accent-color: #38bdf8;
   margin: 0;
+  flex-shrink: 0;
+  border: 2px solid #334155;
+  border-radius: 4px;
+  background-color: #0f172a;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background-color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+.checkbox-label span {
+  line-height: 1.5;
+  flex: 1;
 }
 
 .checkbox-label input[type="checkbox"]:disabled {
@@ -504,13 +537,14 @@
 }
 
 .client-fields-section {
-  background-color: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background-color: #0f172a;
+  border: 2px solid #38bdf8;
   border-radius: 8px;
   padding: 20px;
   margin-top: 16px;
   margin-bottom: 24px;
   animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
 }
 
 @keyframes slideDown {
@@ -528,8 +562,8 @@
   margin: 0 0 20px 0;
   font-size: 16px;
   font-weight: 700;
-  color: #4a90e2;
-  border-bottom: 2px solid #e0e0e0;
+  color: #38bdf8;
+  border-bottom: 2px solid #38bdf8;
   padding-bottom: 8px;
 }
 
@@ -544,20 +578,21 @@
 .client-select {
   width: 100%;
   padding: 12px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid #334155;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s;
   box-sizing: border-box;
-  background-color: white;
+  background-color: #0f172a;
+  color: #ffffff;
   cursor: pointer;
 }
 
 .client-select:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 
 .client-select:disabled {
@@ -570,34 +605,34 @@
 .btn-cancel-new-client {
   width: 100%;
   padding: 10px 20px;
-  border: 2px solid #4a90e2;
+  border: 2px solid #38bdf8;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background-color: white;
-  color: #4a90e2;
+  background-color: transparent;
+  color: #38bdf8;
   margin-top: 12px;
 }
 
 .btn-create-new-client:hover {
-  background-color: #4a90e2;
-  color: white;
+  background-color: #38bdf8;
+  color: #0f172a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
 .btn-cancel-new-client {
-  border-color: #999;
-  color: #666;
+  border-color: #64748b;
+  color: #94a3b8;
   margin-top: 16px;
 }
 
 .btn-cancel-new-client:hover {
-  background-color: #f5f5f5;
-  border-color: #666;
-  color: #333;
+  background-color: #334155;
+  border-color: #94a3b8;
+  color: #ffffff;
 }
 
 .btn-create-new-client:disabled,
@@ -612,7 +647,7 @@
   gap: 12px;
   justify-content: flex-end;
   padding-top: 24px;
-  border-top: 2px solid #f0f0f0;
+  border-top: 2px solid #334155;
 }
 
 .btn-primary,
@@ -650,13 +685,14 @@
 
 .btn-secondary {
   background-color: transparent;
-  color: #666;
-  border: 2px solid #ddd;
+  color: #94a3b8;
+  border: 2px solid #64748b;
 }
 
 .btn-secondary:hover {
-  background-color: #f5f5f5;
-  border-color: #999;
+  background-color: #334155;
+  border-color: #94a3b8;
+  color: #ffffff;
 }
 
 /* Responsive Design */

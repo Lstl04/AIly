@@ -165,7 +165,7 @@ function Home() {
   return (
     <div className="home-container">
       <div className="home-header">
-        <h1>Welcome back{user?.given_name ? `, ${user.given_name}` : ''}! 👋</h1>
+        <h1>Welcome back{user?.given_name ? `, ${user.given_name}` : ''}!</h1>
         <p className="subtitle">Your financial management dashboard</p>
       </div>
 
@@ -173,7 +173,7 @@ function Home() {
         {/* Stats Cards */}
         <div className="stats-section">
           <div className="stat-card jobs">
-            <div className="stat-icon">🔧</div>
+            <div className="stat-icon">JOBS</div>
             <div className="stat-info">
               <span className="stat-value">{stats.jobsCount}</span>
               <span className="stat-label">Total Jobs</span>
@@ -185,7 +185,7 @@ function Home() {
           </div>
 
           <div className="stat-card expenses">
-            <div className="stat-icon">🧾</div>
+            <div className="stat-icon">EXPENSES</div>
             <div className="stat-info">
               <span className="stat-value">{formatCurrency(stats.expensesTotal)}</span>
               <span className="stat-label">Total Expenses</span>
@@ -196,7 +196,7 @@ function Home() {
           </div>
 
           <div className="stat-card revenue">
-            <div className="stat-icon">💰</div>
+            <div className="stat-icon">REVENUE</div>
             <div className="stat-info">
               <span className="stat-value">Coming Soon</span>
               <span className="stat-label">Revenue</span>
@@ -204,7 +204,7 @@ function Home() {
           </div>
 
           <div className="stat-card profit">
-            <div className="stat-icon">📈</div>
+            <div className="stat-icon">PROFIT</div>
             <div className="stat-info">
               <span className="stat-value">Coming Soon</span>
               <span className="stat-label">Net Profit</span>
@@ -217,15 +217,15 @@ function Home() {
           <h2>Quick Actions</h2>
           <div className="action-buttons">
             <button className="action-btn primary" onClick={() => navigate('/expenses')}>
-              <span className="btn-icon">📸</span>
+              <span className="btn-icon">SCAN</span>
               Scan Receipt
             </button>
             <button className="action-btn secondary" onClick={() => navigate('/jobs')}>
-              <span className="btn-icon">🔧</span>
+              <span className="btn-icon">NEW</span>
               New Job
             </button>
             <button className="action-btn secondary" onClick={() => navigate('/calendar')}>
-              <span className="btn-icon">📅</span>
+              <span className="btn-icon">CAL</span>
               Calendar
             </button>
           </div>
@@ -237,14 +237,14 @@ function Home() {
           
           {recentJobs.length === 0 && recentExpenses.length === 0 ? (
             <div className="activity-placeholder">
-              <p>📭 No recent activity</p>
+              <p className="placeholder-title">No recent activity</p>
               <span className="placeholder-text">Your recent jobs and expenses will appear here</span>
             </div>
           ) : (
             <div className="activity-list">
               {recentJobs.map(job => (
                 <div key={job._id} className="activity-item job">
-                  <span className="activity-icon">🔧</span>
+                  <span className="activity-icon">JOB</span>
                   <div className="activity-content">
                     <span className="activity-title">{job.title}</span>
                     <span className="activity-meta">
@@ -256,7 +256,7 @@ function Home() {
               
               {recentExpenses.map(expense => (
                 <div key={expense._id} className="activity-item expense">
-                  <span className="activity-icon">🧾</span>
+                  <span className="activity-icon">EXP</span>
                   <div className="activity-content">
                     <span className="activity-title">{expense.vendorName || 'Expense'}</span>
                     <span className="activity-meta">
