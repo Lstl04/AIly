@@ -114,17 +114,16 @@ function Sidebar({ user }) {
           </button>
         </div>
 
-        {/* Jobs Section (collapsed by default) */}
+        {/* Jobs Section */}
         <div className="sidebar-section">
           <button 
-            className="section-header"
-            onClick={() => {}}
+            className={`section-header ${location.pathname === '/jobs' ? 'active' : ''}`}
+            onClick={() => navigate('/jobs')}
           >
             <div className="section-title">
               <span className="section-icon">🔧</span>
               <span>Jobs</span>
             </div>
-            <span className="expand-icon">›</span>
           </button>
         </div>
         

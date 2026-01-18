@@ -135,8 +135,8 @@ class JobBase(BaseModel):
 class JobCreate(JobBase):
     """Model for creating a new job"""
     userId: str  # Required
-    clientId: str  # Required
     title: str  # Required
+    # clientId is optional for now
 
 class JobUpdate(JobBase):
     """Model for updating a job"""

@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Calendar from './pages/Calendar';
+import Jobs from './pages/Jobs';
 import './App.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route path="/jobs" element={<Jobs />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
