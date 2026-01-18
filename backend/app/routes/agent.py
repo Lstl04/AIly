@@ -59,7 +59,7 @@ def trigger_gumloop_agent(message: str):
     """
     Triggers the Gumloop workflow and returns the agent's decision.
     """
-    url = "https://api.gumloop.com/api/v1/start_pipeline?api_key=97328eb9be81494c93ecb5cb90ce4225&user_id=MgNDAoi0fnVTD8lxMmjk1tlvSWh1&saved_item_id=kU7wBLNvGmyf7MaUXqn9Dv"
+    url = "https://api.gumloop.com/api/v1/start_pipeline?api_key=97328eb9be81494c93ecb5cb90ce4225&user_id=MgNDAoi0fnVTD8lxMmjk1tlvSWh1&saved_item_id=hPGerRtoNfcuW7XtGxgxrz"
     
     headers = {
         "Authorization": f"Bearer 97328eb9be81494c93ecb5cb90ce4225",
