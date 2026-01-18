@@ -18,17 +18,13 @@ function Profile() {
     hourlyRate: ''
   });
 
-  // Fetch user profile on component mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
         setError(null);
-
         const token = await getAccessTokenSilently({
-          authorizationParams: {
-            audience: "https://personalcfo.com"
-          }
+          authorizationParams: { audience: "https://personalcfo.com" }
         });
 
         const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
@@ -39,14 +35,9 @@ function Profile() {
           },
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch profile');
         const userData = await response.json();
-        console.log('User profile data:', userData);
 
-        // Populate form with user data
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -57,7 +48,6 @@ function Profile() {
           businessCategory: userData.businessCategory || '',
           hourlyRate: userData.hourlyRate || ''
         });
-
       } catch (error) {
         console.error('Error fetching profile:', error);
         setError('Failed to load profile. Please try again.');
@@ -65,7 +55,6 @@ function Profile() {
         setLoading(false);
       }
     };
-
     fetchProfile();
   }, [getAccessTokenSilently]);
 
@@ -81,9 +70,7 @@ function Profile() {
 
     try {
       const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: "https://personalcfo.com"
-        }
+        authorizationParams: { audience: "https://personalcfo.com" }
       });
 
       const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
@@ -95,10 +82,7 @@ function Profile() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-
+      if (!response.ok) throw new Error('Failed to update profile');
       alert('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);

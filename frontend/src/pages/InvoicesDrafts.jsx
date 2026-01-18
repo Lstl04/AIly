@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { generatePDF } from '../utils/pdfGenerator';
 import './Invoices.css';
 
 // Helper function to create Google Calendar event
@@ -781,6 +782,35 @@ function InvoicesDrafts() {
     }
   };
 
+  const handleDownloadPDF = async (invoiceId) => {
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoice details');
+      }
+
+      const invoiceData = await response.json();
+      
+      // Generate and download PDF
+      generatePDF(invoiceData, invoiceData.user, invoiceData.client);
+
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF. Please try again.');
+    }
+  };
+
   const handleSendInvoice = async (invoiceId) => {
     if (!confirm('Send this invoice? It will be moved to the Sent section.')) {
       return;
@@ -952,6 +982,12 @@ function InvoicesDrafts() {
                   }}
                 >
                   ✏️ Edit
+                </button>
+                <button 
+                  className="invoice-action-btn"
+                  onClick={() => handleDownloadPDF(invoice._id)}
+                >
+                  📥 Download PDF
                 </button>
                 <button 
                   className="invoice-action-btn delete"

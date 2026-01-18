@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&family=Inter:wght@400;600;800&display=swap');
+
 .invoices-container {
   padding: 32px 48px;
   max-width: 100%;
@@ -5,6 +7,9 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 64px);
+  background: #0f172a; /* AIly Deep Slate */
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
 }
 
 .invoices-header {
@@ -17,18 +22,22 @@
 .header-content h1 {
   margin: 0 0 8px 0;
   font-size: 32px;
-  color: #1a1a1a;
+  color: #ffffff; /* Forced White */
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -1px;
 }
 
 .header-content .subtitle {
   margin: 0;
-  color: #666;
+  color: #38bdf8; /* AIly Cyan */
+  font-family: 'Roboto Mono', monospace;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .create-invoice-btn {
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  background: #2563eb; /* AIly Blue */
   color: white;
   border: none;
   padding: 14px 28px;
@@ -40,70 +49,39 @@
   align-items: center;
   gap: 8px;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  text-transform: uppercase;
 }
 
 .create-invoice-btn:hover {
+  background: #1d4ed8;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 20px;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f0f0f0;
-  border-top: 4px solid #4a90e2;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  border: 4px solid #1e293b;
+  border-top: 4px solid #38bdf8;
 }
 
 .error-banner {
-  background-color: #fee;
-  border: 2px solid #fcc;
-  color: #c33;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.empty-state p {
-  color: #999;
-  font-size: 16px;
-  font-style: italic;
-}
-
-.invoices-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 2px solid #ef4444;
+  color: #ef4444;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .invoice-card {
-  background: white;
+  background: #1e293b; 
   border-radius: 12px;
-  border: 2px solid #e5e5e5;
-  padding: 20px;
+  border: 2px solid #334155;
+  padding: 28px; /* High-spacing card padding */
   transition: all 0.3s;
 }
 
 .invoice-card:hover {
-  border-color: #4a90e2;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   transform: translateY(-4px);
 }
 
@@ -111,26 +89,17 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 24px; /* INCREASED GAP from 16px */
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.invoice-number {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.invoice-icon {
-  font-size: 24px;
+  border-bottom: 1px solid #334155;
 }
 
 .invoice-number h3 {
   margin: 0;
   font-size: 18px;
-  color: #333;
+  color: #ffffff; /* White Heading */
   font-weight: 600;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .invoice-status {
@@ -139,391 +108,176 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+  font-family: 'Roboto Mono', monospace;
 }
 
-.status-draft {
-  background-color: #f0f0f0;
-  color: #666;
-}
-
-.status-sent {
-  background-color: #cce5ff;
-  color: #004085;
-}
-
-.status-paid {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-overdue {
-  background-color: #f8d7da;
-  color: #721c24;
-}
+.status-draft { background-color: #334155; color: #94a3b8; }
+.status-sent { background-color: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
+.status-paid { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; }
+.status-overdue { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; }
 
 .invoice-card-body {
-  margin-bottom: 16px;
+  margin-bottom: 24px; /* INCREASED GAP from 16px */
 }
 
 .invoice-amount {
-  margin-bottom: 16px;
+  margin-bottom: 24px; /* INCREASED GAP from 16px */
 }
 
 .amount-label {
-  display: block;
-  font-size: 12px;
-  color: #999;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  color: #64748b;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .amount-value {
-  font-size: 28px;
-  color: #333;
-  font-weight: 700;
+  color: #38bdf8; /* AIly Cyan */
+  font-family: 'Roboto Mono', monospace;
 }
 
 .invoice-dates {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px; /* INCREASED GAP from 8px for vertical separation */
   margin-bottom: 12px;
 }
 
-.date-item {
-  display: flex;
-  justify-content: space-between;
-}
-
 .date-label {
-  font-size: 12px;
-  color: #999;
-  font-weight: 600;
+  color: #64748b;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .date-value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
+  color: #f8fafc;
 }
-
 .invoice-card-footer {
+  padding-top: 20px; /* Increased top padding for the footer area */
+  border-top: 1px solid #334155;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  gap: 12px; /* INCREASED GAP between buttons */
 }
 
 .invoice-action-btn {
   flex: 1;
-  min-width: 80px;
-  background: none;
-  border: 2px solid #e5e5e5;
-  padding: 10px 12px;
+  background: #0f172a;
+  border: 2px solid #334155;
+  color: #94a3b8;
+  
+  /* SIZE UPDATES */
+  padding: 12px 16px; /* INCREASED PADDING from 10px 12px */
+  font-size: 13px;      /* INCREASED FONT SIZE from 11px */
+  
+  font-family: 'Roboto Mono', monospace;
+  text-transform: uppercase;
   border-radius: 8px;
-  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-weight: 600;
+  gap: 8px; /* Increased gap between icon and text */
+  font-weight: 700;
 }
 
 .invoice-action-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #4a90e2;
+  background-color: #1e293b;
+  border-color: #38bdf8;
+  color: white;
+  transform: translateY(-2px); /* Subtle lift on hover */
+}
+
+.invoice-action-btn.delete {
+  color: #ef4444; /* Standard alert color */
 }
 
 .invoice-action-btn.delete:hover {
-  background-color: #fee;
-  border-color: #dc3545;
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #f87171;
 }
 
-@media (max-width: 768px) {
-  .invoices-container {
-    padding: 20px;
-  }
-
-  .invoices-header {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .create-invoice-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .invoices-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Modal Styles */
+/* --- Terminal Modal & Forms --- */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.9);
 }
 
 .invoice-modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 32px;
-  border-bottom: 2px solid #f0f0f0;
-  position: sticky;
-  top: 0;
-  background: white;
-  border-radius: 16px 16px 0 0;
-  z-index: 10;
+  border-bottom: 2px solid #334155;
+  background: #0f172a;
 }
 
 .modal-header h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #1a1a1a;
-  font-weight: 600;
+  color: #ffffff;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 32px;
-  color: #666;
-  cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-/* Form Styles */
-.invoice-form {
-  padding: 32px;
-}
-
-.form-section {
-  margin-bottom: 32px;
+  color: #94a3b8;
 }
 
 .form-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  color: #333;
-  font-weight: 600;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
-}
-
-.form-group {
-  margin-bottom: 20px;
+  color: #38bdf8; /* Cyan section headers */
+  border-bottom: 2px solid #334155;
+  font-family: 'Roboto Mono', monospace;
+  text-transform: uppercase;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  color: #ffffff !important; /* Forced White Labels */
+  font-family: 'Roboto Mono', monospace;
+  text-transform: uppercase;
+  font-size: 11px;
 }
 
 .form-group input,
 .form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  transition: all 0.2s;
-  box-sizing: border-box;
+  background-color: #0f172a !important; /* Terminal Field Background */
+  border: 2px solid #334155;
+  color: #ffffff !important; /* Forced White Input Text */
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  border-color: #2563eb;
 }
 
-.form-group small {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #666;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-/* Item Row */
 .item-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 12px;
-  align-items: end;
-  margin-bottom: 12px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
 }
 
-.remove-item-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
-}
-
-.remove-item-btn:hover {
-  background-color: #c82333;
-}
-
-.add-item-btn {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-item-btn:hover {
-  background-color: #218838;
-}
-
-/* Invoice Total */
 .invoice-total {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  text-align: right;
+  background-color: #0f172a;
+  border: 1px solid #334155;
 }
 
 .invoice-total h3 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
-}
-
-/* Form Actions */
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding-top: 24px;
-  border-top: 2px solid #f0f0f0;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 12px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
+  color: #38bdf8;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .btn-primary {
-  background-color: #4a90e2;
+  background-color: #2563eb;
   color: white;
+  text-transform: uppercase;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #357abd;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  background-color: #1d4ed8;
 }
 
 .btn-secondary {
   background-color: transparent;
-  color: #666;
-  border: 2px solid #ddd;
+  color: #94a3b8;
+  border: 2px solid #334155;
+  text-transform: uppercase;
 }
 
 .btn-secondary:hover {
-  background-color: #f5f5f5;
-  border-color: #999;
-}
-
-@media (max-width: 768px) {
-  .invoice-modal {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .modal-header {
-    padding: 20px;
-  }
-
-  .invoice-form {
-    padding: 20px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .item-row {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-  }
+  background-color: #334155;
+  color: white;
 }

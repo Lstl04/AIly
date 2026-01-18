@@ -1,672 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&family=Inter:wght@400;600;800&display=swap');
+
 .calendar-container {
-  padding: 32px;
+  padding: 40px;
   max-width: 1400px;
   margin: 0 auto;
+  background: #0f172a; /* AIly Deep Slate */
+  color: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
 }
 
+/* --- Terminal Header --- */
 .calendar-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+  align-items: flex-end; /* Grounded look */
+  margin-bottom: 40px;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 24px;
 }
 
 .header-content h1 {
   margin: 0;
   font-size: 32px;
-  color: #1a1a1a;
-  font-weight: 700;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -1px;
 }
 
 .header-content .subtitle {
-  margin: 8px 0 0 0;
-  color: #666;
-  font-size: 16px;
+  margin: 4px 0 0 0;
+  color: #38bdf8; /* AIly Cyan */
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* --- HUD Controls --- */
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .create-event-btn {
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  background: #2563eb !important; /* AIly Blue */
   color: white;
   border: none;
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .create-event-btn:hover {
+  background: #1d4ed8 !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-}
-
-.create-event-btn span:first-child {
-  font-size: 20px;
-}
-
-.google-signin-btn,
-.google-signout-btn {
-  background: white;
-  color: #333;
-  border: 2px solid #ddd;
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.google-signin-btn {
-  border-color: #4285f4;
-  color: #4285f4;
-}
-
-.google-signin-btn:hover {
-  background: #4285f4;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-}
-
-.google-signout-btn {
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-.google-signout-btn:hover {
-  background: #dc3545;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
-
-.google-signin-btn span:first-child,
-.google-signout-btn span:first-child {
-  font-size: 20px;
-}
-
-.calendar-picker-wrapper {
-  position: relative;
 }
 
 .calendar-picker-btn {
-  background: white;
-  color: #333;
-  border: 2px solid #4285f4;
-  padding: 14px 20px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-  min-width: 200px;
 }
 
 .calendar-picker-btn:hover {
-  background: #f8f9fa;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #334155;
 }
 
-.calendar-picker-btn span:first-child {
-  font-size: 18px;
-}
-
-.dropdown-arrow {
-  margin-left: auto;
-  font-size: 12px;
-  transition: transform 0.2s;
-}
-
-.calendar-picker-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 250px;
-  max-height: 400px;
-  overflow-y: auto;
-  z-index: 1000;
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.calendar-option {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.calendar-option:last-child {
-  border-bottom: none;
-}
-
-.calendar-option:hover {
-  background: #f8f9fa;
-}
-
-.calendar-option.selected {
-  background: #e3f2fd;
-  font-weight: 600;
-}
-
-.calendar-color-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px #ddd;
-}
-
-.calendar-name {
-  flex: 1;
-  color: #333;
-  font-size: 14px;
-}
-
-.primary-badge {
-  background: #4285f4;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.calendar-picker-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 999;
-}
-
-/* Create Calendar Modal */
+/* --- Diagnostic Modal (Create/SignIn) --- */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  background-color: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
 }
 
 .create-calendar-modal {
-  background: white;
-  border-radius: 16px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
   padding: 40px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
+  color: #f8fafc;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }
 
 .create-calendar-modal h2 {
-  margin: 0 0 16px 0;
-  font-size: 28px;
-  color: #1a1a1a;
-  font-weight: 700;
-}
-
-.create-calendar-modal p {
-  margin: 0 0 32px 0;
-  color: #666;
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.modal-btn {
-  padding: 14px 28px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  min-width: 140px;
-}
-
-.modal-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .modal-btn.primary {
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  background: #2563eb;
   color: white;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.modal-btn.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
-}
-
-.modal-btn.secondary {
-  background: white;
-  color: #666;
-  border: 2px solid #ddd;
-}
-
-.modal-btn.secondary:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #999;
-}
-
-.btn-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.calendar-content.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px;
-}
-
-.google-signin-prompt {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.prompt-icon {
-  font-size: 80px;
-  margin-bottom: 20px;
-  opacity: 0.5;
-}
-
-.google-signin-prompt h3 {
-  margin: 0 0 12px 0;
-  font-size: 24px;
-  color: #333;
-}
-
-.google-signin-prompt p {
-  margin: 0 0 32px 0;
-  color: #666;
-  font-size: 16px;
-}
-
-.google-signin-btn-large {
-  background: #4285f4;
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-}
-
-.google-signin-btn-large:hover {
-  background: #357ae8;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-}
-
-.google-signin-btn-large span:first-child {
-  font-size: 24px;
-}
-
-.error-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px;
-}
-
-.error-message {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.error-message h3 {
-  color: #dc3545;
-  margin-bottom: 20px;
-  font-size: 24px;
-}
-
-.error-message p {
-  color: #666;
-  font-size: 16px;
-  margin-bottom: 20px;
-}
-
-.error-message ol {
-  color: #333;
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.error-message code {
-  background: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-}
-
+/* --- The Main Grid Module --- */
 .calendar-content {
-  background: white;
-  border-radius: 16px;
-  border: 2px solid #e5e5e5;
+  background: #1e293b; /* Module Card Color */
+  border-radius: 12px;
+  border: 1px solid #334155;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.calendar-error-banner {
-  background-color: #fee;
-  border: 2px solid #fcc;
-  color: #c33;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.calendar-error-banner span:first-child {
-  font-size: 20px;
-}
-
-.calendar-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  border-radius: 16px;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f0f0f0;
-  border-top-color: #4285f4;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.calendar-loading-overlay p {
-  margin-top: 16px;
-  color: #666;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-/* FullCalendar Custom Styling */
+/* --- FullCalendar Overrides (Industrial HUD) --- */
 .calendar-content .fc {
-  font-family: inherit;
+  --fc-border-color: #334155;
+  --fc-button-bg-color: #334155;
+  --fc-button-border-color: #475569;
+  --fc-button-hover-bg-color: #475569;
+  --fc-today-bg-color: rgba(56, 189, 248, 0.05);
 }
 
 .calendar-content .fc-toolbar-title {
-  font-size: 24px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 22px !important;
   font-weight: 700;
-  color: #1a1a1a;
-}
-
-.calendar-content .fc-button {
-  background-color: #4a90e2;
-  border: none;
-  padding: 8px 16px;
-  font-weight: 600;
-  text-transform: capitalize;
-  transition: all 0.2s;
-}
-
-.calendar-content .fc-button:hover {
-  background-color: #357abd;
-}
-
-.calendar-content .fc-button-active {
-  background-color: #2c5f8d !important;
-}
-
-.calendar-content .fc-button:focus {
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
-}
-
-.calendar-content .fc-button-primary:not(:disabled).fc-button-active,
-.calendar-content .fc-button-primary:not(:disabled):active {
-  background-color: #2c5f8d;
-}
-
-.calendar-content .fc-daygrid-day-number {
-  color: #333;
-  padding: 8px;
-  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
 }
 
 .calendar-content .fc-col-header-cell {
-  background-color: #f8f9fa;
-  padding: 12px;
-  font-weight: 600;
-  color: #666;
+  background-color: #0f172a;
+  padding: 15px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
   text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.5px;
 }
 
-.calendar-content .fc-daygrid-day {
-  transition: background-color 0.2s;
-}
-
-.calendar-content .fc-daygrid-day:hover {
-  background-color: #f8f9fa;
-  cursor: pointer;
+.calendar-content .fc-daygrid-day-number {
+  color: #94a3b8;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  padding: 10px;
 }
 
 .calendar-content .fc-daygrid-day.fc-day-today {
-  background-color: #e3f2fd !important;
+  border: 1px solid #38bdf8 !important; /* Cyan glow for today */
 }
 
 .calendar-content .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  background-color: #4a90e2;
-  color: white;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  background-color: #38bdf8;
+  color: #0f172a;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  margin: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Event Styling */
 .calendar-content .fc-event {
+  background: #2563eb; /* Blue primary events */
   border: none;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .calendar-content .fc-event:hover {
+  background: #3b82f6;
   transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.calendar-content .fc-daygrid-event {
-  margin: 2px 4px;
+/* --- Utility States --- */
+.calendar-loading-overlay {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(4px);
 }
 
-/* Empty state message for when there are no events */
-.no-events-message {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 16px;
+.spinner {
+  border-top-color: #38bdf8; /* Cyan loading */
 }
 
-/* Responsive Design */
+.google-signin-btn-large {
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 900;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Error Banner */
+.calendar-error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
 @media (max-width: 768px) {
-  .calendar-container {
-    padding: 20px;
-  }
-
-  .calendar-header {
-    flex-direction: column;
-    gap: 20px;
-    align-items: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .create-event-btn,
-  .google-signin-btn,
-  .google-signout-btn,
-  .calendar-picker-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .calendar-picker-dropdown {
-    left: 0;
-    right: 0;
-    width: 100%;
-  }
-
-  .calendar-header h1 {
-    font-size: 24px;
-  }
-
-  .calendar-content {
-    padding: 16px;
-  }
-
-  .calendar-content .fc-toolbar {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .calendar-content .fc-toolbar-chunk {
-    display: flex;
-    justify-content: center;
-  }
-
-  .calendar-content .fc-button {
-    padding: 6px 12px;
-    font-size: 14px;
-  }
-
-  .create-calendar-modal {
-    padding: 32px 24px;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .modal-btn {
-    width: 100%;
-  }
+  .calendar-container { padding: 20px; }
+  .calendar-header h1 { font-size: 24px; }
+  .header-actions { flex-direction: column; width: 100%; }
 }
