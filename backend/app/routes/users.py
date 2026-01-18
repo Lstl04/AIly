@@ -1,12 +1,66 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List, Dict, Any
 from bson import ObjectId
 from datetime import datetime
 
 from ..models import User, UserCreate, UserUpdate, MessageResponse
 from ..database import get_database
+from ..api.dependencies import verify_token
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+@router.post("/sync")
+async def sync_user(token: dict = Depends(verify_token)):
+    db = get_database()
+
+    auth0_id = token.get("sub")
+    users_collection = db.users
+    
+    existing_user = users_collection.find_one({"auth0_id": auth0_id})
+
+    # Case 1: User doesn't exist at all -> Create them, but mark as incomplete
+    if not existing_user:
+        new_user = {
+            "auth0_id": auth0_id,
+            "onboarding_complete": False  # <--- THE FLAG
+        }
+        result = users_collection.insert_one(new_user)
+        return {"status": "created", "onboarding_complete": False}
+
+    # Case 2: User exists, but hasn't finished the form
+    if not existing_user.get("onboarding_complete"):
+        return {"status": "exists", "onboarding_complete": False}
+
+    # Case 3: Fully active user
+    return {"status": "exists", "onboarding_complete": True}
+
+@router.put("/profile")
+def update_profile(profile: User, token: dict = Depends(verify_token)):
+    db = get_database()
+
+    auth0_id = token.get("sub")
+    users_collection = db.users
+    
+    # Update the document for this specific user
+    result = users_collection.update_one(
+        {"auth0_id": auth0_id},
+        {"$set": {
+            "businessName": profile.businessName,
+            "businessPhone": profile.businessPhone,
+            "businessAddress": profile.businessAddress,
+            "businessCategory": profile.businessCategory,
+            "hourlyRate": profile.hourlyRate,
+            "firstName": profile.firstName,
+            "lastName": profile.lastName,
+            "personalEmail": token.get("https://personalcfo.com/email"),
+            "onboarding_complete": True 
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    return {"msg": "Profile updated successfully"}
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate):
@@ -14,7 +68,7 @@ async def create_user(user: UserCreate):
     db = get_database()
     
     # Check if user with email already exists
-    existing_user = db.users.find_one({"businessEmail": user.businessEmail})
+    existing_user = db.users.find_one({"auth0_id": user.auth0Id})
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

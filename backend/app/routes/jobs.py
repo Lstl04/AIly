@@ -12,18 +12,18 @@ async def create_job(job: JobCreate):
     """Create a new job"""
     db = get_database()
     
-    # Validate IDs
-    if not ObjectId.is_valid(job.userId):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid user ID format"
-        )
+    # Note: userId comes from Auth0 and is not an ObjectId, so we don't validate it
+    # Auth0 user IDs look like: "auth0|123456" or "google-oauth2|123456"
     
-    if not ObjectId.is_valid(job.clientId):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid client ID format"
-        )
+    # Validate client ID only if provided (and only if it looks like an ObjectId)
+    if job.clientId and ObjectId.is_valid(job.clientId):
+        # Verify client exists
+        client = db.clients.find_one({"_id": ObjectId(job.clientId)})
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Client not found"
+            )
     
     # Insert job
     job_dict = job.model_dump(exclude_unset=True)

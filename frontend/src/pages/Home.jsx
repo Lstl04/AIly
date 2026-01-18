@@ -1,9 +1,53 @@
 import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import './Home.css';
 
 function Home() {
-  const { user } = useAuth0();
+  const { logout, user, getAccessTokenSilently } = useAuth0();
+  const navigate = useNavigate();
+  const [isSyncing, setIsSyncing] = useState(true);
+
+  useEffect(() => {
+    const syncUser = async () => {
+      try {
+        // 1. Get the Auth0 Token
+        const token = await getAccessTokenSilently();
+
+        // 2. Call the Backend "Sync" Endpoint
+        const response = await fetch('http://127.0.0.1:8000/api/users/sync', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        console.log("User Sync Result:", data);
+
+        // 3. CHECK: If onboarding is NOT complete, redirect to the sign-up form
+        if (data.onboarding_complete === false) {
+          navigate('/onboarding');
+        } else {
+          // If complete, stop loading and show dashboard
+          setIsSyncing(false);
+        }
+
+      } catch (error) {
+        console.error("Error syncing user:", error);
+        setIsSyncing(false); // Stop loading even if error, so they aren't stuck
+      }
+    };
+
+    syncUser();
+  }, [getAccessTokenSilently, navigate]);
 
   return (
     <div className="home-container">

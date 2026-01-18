@@ -25,6 +25,21 @@ async def create_invoice(invoice: InvoiceCreate):
             detail="Invalid client ID format"
         )
     
+    # Verify client exists and auto-link to user if not already linked
+    client = db.clients.find_one({"_id": ObjectId(invoice.clientId)})
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found"
+        )
+    
+    # Auto-link client to user if client doesn't have a userId
+    if not client.get("userId"):
+        db.clients.update_one(
+            {"_id": ObjectId(invoice.clientId)},
+            {"$set": {"userId": invoice.userId}}
+        )
+    
     # Auto-generate invoice number if not provided
     if not invoice.invoiceNumber:
         # Get user's last invoice number

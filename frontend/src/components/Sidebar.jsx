@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
 function Sidebar({ user }) {
@@ -8,6 +9,7 @@ function Sidebar({ user }) {
   const navigate = useNavigate();
   const [invoicesExpanded, setInvoicesExpanded] = useState(true);
   const [clientsExpanded, setClientsExpanded] = useState(true);
+  const location = useLocation();
 
   const handleLogout = () => {
     logout({ 
@@ -43,11 +45,6 @@ function Sidebar({ user }) {
               <button className="sidebar-item">
                 <span className="item-icon">📝</span>
                 <span className="item-label">Drafts</span>
-                <span className="item-count">0</span>
-              </button>
-              <button className="sidebar-item">
-                <span className="item-icon">✅</span>
-                <span className="item-label">Completed</span>
                 <span className="item-count">0</span>
               </button>
               <button className="sidebar-item">
@@ -104,20 +101,33 @@ function Sidebar({ user }) {
             </div>
           )}
         </div>
-        
-        {/* Jobs Section (collapsed by default) */}
+
+        {/* Calendar Section */}
         <div className="sidebar-section">
           <button 
-            className="section-header"
-            onClick={() => {}}
+            className={`section-header ${location.pathname === '/calendar' ? 'active' : ''}`}
+            onClick={() => navigate('/calendar')}
+          >
+            <div className="section-title">
+              <span className="section-icon">📅</span>
+              <span>Calendar</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Jobs Section */}
+        <div className="sidebar-section">
+          <button 
+            className={`section-header ${location.pathname === '/jobs' ? 'active' : ''}`}
+            onClick={() => navigate('/jobs')}
           >
             <div className="section-title">
               <span className="section-icon">🔧</span>
               <span>Jobs</span>
             </div>
-            <span className="expand-icon">›</span>
           </button>
         </div>
+        
       </nav>
 
       {/* Footer Actions */}

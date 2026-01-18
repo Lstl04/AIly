@@ -44,6 +44,10 @@ class PyObjectId(str):
 
 class UserBase(BaseModel):
     """Base user model with common fields"""
+    auth0Id: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    personalEmail: Optional[str] = None
     businessName: Optional[str] = None
     businessEmail: Optional[str] = None
     businessPhone: Optional[str] = None
@@ -51,7 +55,6 @@ class UserBase(BaseModel):
     businessCategory: Optional[str] = None
     hourlyRate: Optional[float] = None
     lastInvoiceNumber: Optional[int] = 0
-    pastItems: Optional[List[dict]] = []
 
 class UserCreate(UserBase):
     """Model for creating a new user"""
@@ -135,8 +138,8 @@ class JobBase(BaseModel):
 class JobCreate(JobBase):
     """Model for creating a new job"""
     userId: str  # Required
-    clientId: str  # Required
     title: str  # Required
+    # clientId is optional for now
 
 class JobUpdate(JobBase):
     """Model for updating a job"""

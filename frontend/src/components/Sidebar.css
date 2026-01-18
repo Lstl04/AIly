@@ -88,6 +88,12 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.section-header.active {
+  background: rgba(102, 126, 234, 0.15);
+  color: white;
+  border-left: 3px solid #667eea;
+}
+
 .section-title {
   display: flex;
   align-items: center;
