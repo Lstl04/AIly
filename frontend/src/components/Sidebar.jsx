@@ -135,10 +135,7 @@ function Sidebar({ user }) {
           <span className="item-icon">👤</span>
           <span className="item-label">Profile</span>
         </button>
-        <button className="sidebar-item">
-          <span className="item-icon">⚙️</span>
-          <span className="item-label">Settings</span>
-        </button>
+        
         <button className="sidebar-item logout-btn" onClick={handleLogout}>
           <span className="item-icon">🚪</span>
           <span className="item-label">Logout</span>

@@ -21,6 +21,77 @@ function CalendarContent() {
   const [showCreateCalendarModal, setShowCreateCalendarModal] = useState(false);
   const [creatingCalendar, setCreatingCalendar] = useState(false);
 
+  // Restore Google Calendar session from localStorage on mount
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const savedToken = localStorage.getItem('google_calendar_token');
+        const savedTokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+        const savedCalendarId = localStorage.getItem('google_calendar_selected_id');
+        
+        // Check if token exists and is not expired
+        if (savedToken && savedTokenExpiry) {
+          const expiryTime = parseInt(savedTokenExpiry);
+          const now = Date.now();
+          
+          if (now < expiryTime) {
+            // Token is still valid, restore session
+            console.log('Restoring Google Calendar session...');
+            setAccessToken(savedToken);
+            setIsGoogleSignedIn(true);
+            
+            // Load calendars and events
+            const calendarList = await loadCalendarList(savedToken);
+            setCalendars(calendarList);
+            
+            // Restore selected calendar or use PersonalCFO calendar
+            let calendarToUse = savedCalendarId || 'primary';
+            const personalCFOCalendar = calendarList.find(cal => cal.name === 'PersonalCFO');
+            if (personalCFOCalendar) {
+              calendarToUse = personalCFOCalendar.id;
+            }
+            
+            setSelectedCalendarId(calendarToUse);
+            await loadGoogleCalendar(savedToken, calendarToUse);
+          } else {
+            // Token expired, clear storage
+            console.log('Google Calendar token expired');
+            clearGoogleSession();
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring Google Calendar session:', error);
+        clearGoogleSession();
+      }
+    };
+    
+    restoreSession();
+  }, []);
+
+  // Helper function to clear Google session from localStorage
+  const clearGoogleSession = () => {
+    localStorage.removeItem('google_calendar_token');
+    localStorage.removeItem('google_calendar_token_expiry');
+    localStorage.removeItem('google_calendar_selected_id');
+  };
+
+  // Save token to localStorage when it changes
+  useEffect(() => {
+    if (accessToken && isGoogleSignedIn) {
+      localStorage.setItem('google_calendar_token', accessToken);
+      // Google tokens typically expire in 1 hour, store expiry time
+      const expiryTime = Date.now() + (3600 * 1000); // 1 hour from now
+      localStorage.setItem('google_calendar_token_expiry', expiryTime.toString());
+    }
+  }, [accessToken, isGoogleSignedIn]);
+
+  // Save selected calendar ID when it changes
+  useEffect(() => {
+    if (selectedCalendarId) {
+      localStorage.setItem('google_calendar_selected_id', selectedCalendarId);
+    }
+  }, [selectedCalendarId]);
+
   // Create a new PersonalCFO calendar
   const createPersonalCFOCalendar = async (token) => {
     try {
@@ -252,6 +323,7 @@ function CalendarContent() {
     setEvents([]);
     setCalendars([]);
     setSelectedCalendarId('primary');
+    clearGoogleSession();
   };
 
   const handleCalendarChange = (calendarId) => {

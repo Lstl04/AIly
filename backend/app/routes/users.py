@@ -34,6 +34,27 @@ async def sync_user(token: dict = Depends(verify_token)):
     # Case 3: Fully active user
     return {"status": "exists", "onboarding_complete": True}
 
+@router.get("/profile")
+async def get_profile(token: dict = Depends(verify_token)):
+    """Get the current user's profile"""
+    db = get_database()
+
+    auth0_id = token.get("sub")
+    users_collection = db.users
+    
+    user = users_collection.find_one({"auth0_id": auth0_id})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Convert ObjectId to string for JSON serialization
+    user["_id"] = str(user["_id"])
+    
+    return user
+
 @router.put("/profile")
 def update_profile(profile: User, token: dict = Depends(verify_token)):
     db = get_database()
