@@ -62,8 +62,8 @@ async def create_client(client: ClientCreate):
     return created_client
 
 @router.get("/", response_model=List[Client])
-async def get_clients(user_id: str = None, skip: int = 0, limit: int = 100):
-    """Get all clients, optionally filtered by user_id"""
+async def get_clients(user_id: str = None, archived: bool = None, skip: int = 0, limit: int = 100):
+    """Get all clients, optionally filtered by user_id and archived status"""
     db = get_database()
     
     query = {}
@@ -76,6 +76,20 @@ async def get_clients(user_id: str = None, skip: int = 0, limit: int = 100):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid user ID format"
             )
+    
+    # Filter by archived status if provided
+    # If archived is None, return all clients (no filter)
+    # If archived is True, return only archived clients
+    # If archived is False, return only active clients (archived is false or doesn't exist)
+    if archived is not None:
+        if archived:
+            query["archived"] = True
+        else:
+            # For active clients, include both false and missing archived field
+            query["$or"] = [
+                {"archived": False},
+                {"archived": {"$exists": False}}
+            ]
     
     clients = list(db.clients.find(query).skip(skip).limit(limit))
     # Convert ObjectId fields to strings for response

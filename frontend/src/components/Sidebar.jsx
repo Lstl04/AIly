@@ -15,6 +15,11 @@ function Sidebar({ user }) {
     paid: 0,
     overdue: 0
   });
+  const [clientCounts, setClientCounts] = useState({
+    all: 0,
+    active: 0,
+    archived: 0
+  });
 
   const handleLogout = () => {
     logout({ 
@@ -85,12 +90,82 @@ function Sidebar({ user }) {
     }
   };
 
+  const fetchClientCounts = async () => {
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      // Get user profile to get MongoDB _id
+      const profileResponse = await fetch('http://127.0.0.1:8000/api/users/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!profileResponse.ok) {
+        return;
+      }
+      
+      const profile = await profileResponse.json();
+      const userId = profile._id;
+      
+      if (!userId) return;
+
+      // Fetch all clients
+      const allResponse = await fetch(
+        `http://127.0.0.1:8000/api/clients/?user_id=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Fetch active clients
+      const activeResponse = await fetch(
+        `http://127.0.0.1:8000/api/clients/?user_id=${userId}&archived=false`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Fetch archived clients
+      const archivedResponse = await fetch(
+        `http://127.0.0.1:8000/api/clients/?user_id=${userId}&archived=true`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const allCount = allResponse.ok ? (await allResponse.json()).length : 0;
+      const activeCount = activeResponse.ok ? (await activeResponse.json()).length : 0;
+      const archivedCount = archivedResponse.ok ? (await archivedResponse.json()).length : 0;
+
+      setClientCounts({
+        all: allCount,
+        active: activeCount,
+        archived: archivedCount
+      });
+    } catch (error) {
+      console.error('Error fetching client counts:', error);
+    }
+  };
+
   useEffect(() => {
     fetchInvoiceCounts();
+    fetchClientCounts();
     
-    // Refresh counts when route changes (user navigates between invoice pages)
+    // Refresh counts when route changes (user navigates between pages)
     const interval = setInterval(() => {
       fetchInvoiceCounts();
+      fetchClientCounts();
     }, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
@@ -187,20 +262,29 @@ function Sidebar({ user }) {
           
           {clientsExpanded && (
             <div className="section-content">
-              <button className="sidebar-item">
+              <button 
+                className={`sidebar-item ${location.pathname === '/clients/all' ? 'active' : ''}`}
+                onClick={() => navigate('/clients/all')}
+              >
                 <span className="item-icon">📋</span>
                 <span className="item-label">All Clients</span>
-                <span className="item-count">0</span>
+                <span className="item-count">{clientCounts.all}</span>
               </button>
-              <button className="sidebar-item">
+              <button 
+                className={`sidebar-item ${location.pathname === '/clients/active' ? 'active' : ''}`}
+                onClick={() => navigate('/clients/active')}
+              >
                 <span className="item-icon">⭐</span>
                 <span className="item-label">Active</span>
-                <span className="item-count">0</span>
+                <span className="item-count">{clientCounts.active}</span>
               </button>
-              <button className="sidebar-item">
+              <button 
+                className={`sidebar-item ${location.pathname === '/clients/archived' ? 'active' : ''}`}
+                onClick={() => navigate('/clients/archived')}
+              >
                 <span className="item-icon">📦</span>
                 <span className="item-label">Archived</span>
-                <span className="item-count">0</span>
+                <span className="item-count">{clientCounts.archived}</span>
               </button>
             </div>
           )}

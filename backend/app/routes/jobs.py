@@ -151,7 +151,15 @@ async def update_job(job_id: str, job_update: JobUpdate):
     
     update_data = job_update.model_dump(exclude_unset=True)
     
-    if not update_data:
+    # Initialize unset_fields for fields we want to remove
+    unset_fields = {}
+    
+    # Handle googleCalendarEventId - if empty string or None, unset it
+    if "googleCalendarEventId" in update_data and (update_data["googleCalendarEventId"] == "" or update_data["googleCalendarEventId"] is None):
+        unset_fields["googleCalendarEventId"] = ""
+        update_data.pop("googleCalendarEventId", None)
+    
+    if not update_data and not unset_fields:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No fields to update"
@@ -166,8 +174,11 @@ async def update_job(job_id: str, job_update: JobUpdate):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid user ID format"
             )
-    if update_data.get("clientId") and update_data["clientId"].strip():
-        if ObjectId.is_valid(update_data["clientId"]):
+    if update_data.get("clientId"):
+        # Handle empty string - remove it from update_data
+        if isinstance(update_data["clientId"], str) and not update_data["clientId"].strip():
+            update_data.pop("clientId")
+        elif ObjectId.is_valid(update_data["clientId"]):
             update_data["clientId"] = ObjectId(update_data["clientId"])
         else:
             raise HTTPException(
@@ -183,9 +194,22 @@ async def update_job(job_id: str, job_update: JobUpdate):
                 detail="Invalid invoice ID format"
             )
     
+    # Build update operation
+    update_operation = {}
+    if update_data:
+        update_operation["$set"] = update_data
+    if unset_fields:
+        update_operation["$unset"] = unset_fields
+    
+    if not update_operation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields to update"
+        )
+    
     result = db.jobs.update_one(
         {"_id": ObjectId(job_id)},
-        {"$set": update_data}
+        update_operation
     )
     
     if result.matched_count == 0:

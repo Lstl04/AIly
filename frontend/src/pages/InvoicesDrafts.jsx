@@ -81,11 +81,19 @@ function InvoicesDrafts() {
   const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [clientInfo, setClientInfo] = useState(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [pendingJobs, setPendingJobs] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+  const [showCreateNewClient, setShowCreateNewClient] = useState(false);
+  const [showCreateNewJob, setShowCreateNewJob] = useState(false);
   
   const [formData, setFormData] = useState({
+    selectedClientId: '',
     clientName: '',
     clientEmail: '',
     clientAddress: '',
+    selectedJobId: '',
     jobTitle: '',
     jobDescription: '',
     hoursWorked: 0,
@@ -103,6 +111,62 @@ function InvoicesDrafts() {
       fetchInvoices();
     }
   }, [userProfile]);
+
+  // Fetch clients and jobs when modal opens
+  useEffect(() => {
+    if (showCreateModal && userProfile) {
+      fetchClients();
+      fetchPendingJobs();
+    }
+  }, [showCreateModal, userProfile]);
+
+  const fetchClients = async () => {
+    if (!userProfile) return;
+    
+    setLoadingClients(true);
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      const response = await fetch(`http://127.0.0.1:8000/api/clients/?user_id=${userProfile._id}&archived=false`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching clients:', err);
+    } finally {
+      setLoadingClients(false);
+    }
+  };
+
+  const fetchPendingJobs = async () => {
+    if (!userProfile) return;
+    
+    setLoadingJobs(true);
+    try {
+      // Fetch all jobs and filter for pending/in_progress
+      const response = await fetch(`http://127.0.0.1:8000/api/jobs/?user_id=${userProfile._id}`);
+      if (response.ok) {
+        const allJobs = await response.json();
+        // Filter for pending and in_progress jobs
+        const pending = allJobs.filter(job => job.status === 'pending' || job.status === 'in_progress');
+        setPendingJobs(pending || []);
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+    } finally {
+      setLoadingJobs(false);
+    }
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -220,37 +284,120 @@ function InvoicesDrafts() {
         }
       });
 
-      // Step 1: Create client (only if not editing)
+      // Step 1: Get or create client (only if not editing)
       let createdClientId = "";
       if (!editingInvoiceId) {
-        const clientData = {
+        // If a client is selected from dropdown, use that
+        if (formData.selectedClientId) {
+          createdClientId = formData.selectedClientId;
+        } 
+        // If creating new client, create it first
+        else if (showCreateNewClient && formData.clientName.trim()) {
+          const clientData = {
+            userId: userProfile._id,
+            name: formData.clientName.trim(),
+            email: formData.clientEmail.trim() || undefined,
+            address: formData.clientAddress.trim() || undefined,
+            archived: false
+          };
+
+          console.log('Creating client with data:', clientData);
+
+          const clientResponse = await fetch('http://127.0.0.1:8000/api/clients/', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(clientData),
+          });
+
+          if (!clientResponse.ok) {
+            const errorData = await clientResponse.json().catch(() => ({}));
+            console.error('Client creation error:', errorData);
+            throw new Error(errorData.detail || 'Failed to create client');
+          }
+
+          const client = await clientResponse.json();
+          console.log('Client created:', client);
+          createdClientId = client._id || client.id;
+        } else {
+          throw new Error('Please select a client or create a new one');
+        }
+      } else {
+        // When editing, use existing clientId from invoice
+        if (clientInfo && clientInfo._id) {
+          createdClientId = clientInfo._id;
+        }
+      }
+
+      // Step 1.5: Get or create job
+      let createdJobId = "";
+      let isNewJobCreated = false;
+      
+      // If a job is selected from dropdown, use that (DO NOT CREATE NEW JOB)
+      if (formData.selectedJobId && formData.selectedJobId.trim()) {
+        createdJobId = formData.selectedJobId.trim();
+        console.log('✓ Using existing job from dropdown:', createdJobId);
+      } 
+      // If creating new job, create it first (ONLY if no job was selected)
+      else if (showCreateNewJob && formData.jobTitle.trim() && !formData.selectedJobId) {
+        console.log('Creating new job (no existing job selected)');
+        isNewJobCreated = true;
+        const jobData = {
           userId: userProfile._id,
-          name: formData.clientName,
-          email: formData.clientEmail,
-          address: formData.clientAddress || ''
+          title: formData.jobTitle.trim(),
+          status: 'pending',
+          startTime: new Date().toISOString(), // Default to now
+          endTime: new Date(Date.now() + 3600000).toISOString(), // Default to 1 hour from now
         };
 
-        console.log('Creating client with data:', clientData);
+        // Add clientId if client was selected/created
+        if (createdClientId) {
+          jobData.clientId = createdClientId;
+        }
 
-        const clientResponse = await fetch('http://127.0.0.1:8000/api/clients/', {
+        // Add location if client has address
+        if (createdClientId) {
+          try {
+            const clientResponse = await fetch(`http://127.0.0.1:8000/api/clients/${createdClientId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            if (clientResponse.ok) {
+              const client = await clientResponse.json();
+              if (client.address) {
+                jobData.location = client.address;
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching client for location:', err);
+          }
+        }
+
+        console.log('Creating job with data:', jobData);
+
+        const jobResponse = await fetch('http://127.0.0.1:8000/api/jobs/', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(clientData),
+          body: JSON.stringify(jobData),
         });
 
-        if (!clientResponse.ok) {
-          const errorData = await clientResponse.json().catch(() => ({}));
-          console.error('Client creation error:', errorData);
-          throw new Error(errorData.detail || 'Failed to create client');
+        if (!jobResponse.ok) {
+          const errorData = await jobResponse.json().catch(() => ({}));
+          console.error('Job creation error:', errorData);
+          throw new Error(errorData.detail || 'Failed to create job');
         }
 
-        const client = await clientResponse.json();
-        console.log('Client created:', client);
-        createdClientId = client._id || client.id;
+        const job = await jobResponse.json();
+        console.log('Job created:', job);
+        createdJobId = job._id || job.id;
       }
+      // If no job selected and not creating new, jobId remains empty string
 
       // Step 2: Prepare line items (without job description)
       const lineItems = [];
@@ -278,12 +425,33 @@ function InvoicesDrafts() {
       });
 
       // Step 3: Create or update invoice
+      // Get job title and description from selected job or form data
+      let invoiceTitle = formData.jobTitle || '';
+      let invoiceDescription = formData.jobDescription || '';
+      
+      // If job is selected, fetch job details to get title
+      if (formData.selectedJobId && !showCreateNewJob) {
+        try {
+          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${formData.selectedJobId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (jobResponse.ok) {
+            const job = await jobResponse.json();
+            invoiceTitle = job.title || invoiceTitle;
+          }
+        } catch (err) {
+          console.error('Error fetching job details:', err);
+        }
+      }
+
       const invoiceData = {
         userId: userProfile._id,
-        clientId: createdClientId, // Use the clientId from the client we just created
-        jobId: "", // Empty string as requested
-        invoiceTitle: formData.jobTitle || '',
-        invoiceDescription: formData.jobDescription || '',
+        clientId: createdClientId,
+        jobId: createdJobId || "",
+        invoiceTitle: invoiceTitle,
+        invoiceDescription: invoiceDescription,
         status: 'draft',
         issueDate: new Date(formData.issueDate).toISOString(),
         dueDate: new Date(formData.dueDate).toISOString(),
@@ -325,26 +493,107 @@ function InvoicesDrafts() {
       const invoice = await invoiceResponse.json();
       console.log('Invoice saved successfully:', invoice);
 
-      // If invoice was created (not edited) and has a jobId, check if we should create calendar event
-      if (!editingInvoiceId && invoice.jobId) {
+      // If invoice was created (not edited) and has a jobId, mark the job as completed
+      // IMPORTANT: Only mark as completed if it was an EXISTING job (selected from dropdown), not a newly created one
+      if (!editingInvoiceId && invoice.jobId && invoice.jobId.trim() && !isNewJobCreated && formData.selectedJobId) {
         try {
-          // Fetch the job to check its status
-          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${invoice.jobId}`, {
+          const jobId = invoice.jobId.trim();
+          console.log('=== MARKING JOB AS COMPLETED ===');
+          console.log('Invoice jobId:', jobId);
+          console.log('Invoice data:', invoice);
+          
+          // Fetch the job to get its current data and check for calendar event
+          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
           
-          if (jobResponse.ok) {
-            const job = await jobResponse.json();
-            // Create calendar event if job is not completed
-            if (job.status !== 'completed') {
-              await createGoogleCalendarEvent(job);
+          if (!jobResponse.ok) {
+            console.error('Failed to fetch job for completion:', jobId);
+            return; // Don't fail invoice creation
+          }
+          
+          const job = await jobResponse.json();
+          
+          // Delete Google Calendar event if it exists (completed jobs shouldn't have events)
+          if (job.googleCalendarEventId) {
+            try {
+              const googleToken = localStorage.getItem('google_calendar_token');
+              const calendarId = localStorage.getItem('google_calendar_selected_id') || 'primary';
+              
+              if (googleToken) {
+                const tokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+                if (!tokenExpiry || Date.now() < parseInt(tokenExpiry)) {
+                  await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(job.googleCalendarEventId)}`,
+                    {
+                      method: 'DELETE',
+                      headers: {
+                        Authorization: `Bearer ${googleToken}`,
+                      },
+                    }
+                  );
+                  console.log('Deleted Google Calendar event:', job.googleCalendarEventId);
+                }
+              }
+            } catch (error) {
+              console.error('Failed to delete Google Calendar event:', error);
+              // Don't fail job completion if calendar event deletion fails
             }
           }
+          
+          // Update job status to completed - only send status
+          const updatePayload = {
+            status: 'completed',
+            googleCalendarEventId: '' // Clear the event ID
+          };
+          
+          console.log('Updating job status to completed:', jobId, updatePayload);
+          
+          const updateJobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatePayload),
+          });
+          
+          if (updateJobResponse.ok) {
+            const updatedJob = await updateJobResponse.json();
+            console.log('Job successfully marked as completed:', updatedJob);
+            
+            // Verify the status was actually updated
+            if (updatedJob.status !== 'completed') {
+              console.error('ERROR: Job status was not updated to completed. Current status:', updatedJob.status);
+              console.error('Job data:', updatedJob);
+            } else {
+              console.log('✓ Job status confirmed as completed. Job ID:', updatedJob._id || updatedJob.id);
+              
+              // Double-check by fetching the job again
+              const verifyResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              if (verifyResponse.ok) {
+                const verifiedJob = await verifyResponse.json();
+                console.log('Verification - Job status:', verifiedJob.status, 'Job ID:', verifiedJob._id || verifiedJob.id);
+                if (verifiedJob.status !== 'completed') {
+                  console.error('CRITICAL: Job status verification failed! Status is still:', verifiedJob.status);
+                }
+              }
+            }
+          } else {
+            const errorData = await updateJobResponse.json().catch(() => ({}));
+            console.error('Failed to update job status. Response status:', updateJobResponse.status);
+            console.error('Error data:', errorData);
+            // Don't fail invoice creation if job completion fails
+          }
         } catch (error) {
-          console.error('Failed to create Google Calendar event for invoice job:', error);
-          // Don't fail invoice creation if calendar event fails
+          console.error('Failed to mark job as completed:', error);
+          // Don't fail invoice creation if job completion fails
         }
       }
 
@@ -469,9 +718,11 @@ function InvoicesDrafts() {
       }
 
       setFormData({
+        selectedClientId: invoice.clientId || '',
         clientName: clientName,
         clientEmail: clientEmail,
         clientAddress: clientAddress,
+        selectedJobId: invoice.jobId || '',
         jobTitle: invoice.invoiceTitle || '',
         jobDescription: invoice.invoiceDescription || '',
         hoursWorked: hoursWorked,
@@ -483,6 +734,10 @@ function InvoicesDrafts() {
       setClientInfo(client);
       setEditingInvoiceId(invoiceId);
       setShowCreateModal(true);
+      
+      // Fetch clients and jobs when editing (to populate dropdowns)
+      await fetchClients();
+      await fetchPendingJobs();
 
     } catch (error) {
       console.error('Error fetching invoice:', error);
@@ -563,9 +818,11 @@ function InvoicesDrafts() {
 
   const resetForm = () => {
     setFormData({
+      selectedClientId: '',
       clientName: '',
       clientEmail: '',
       clientAddress: '',
+      selectedJobId: '',
       jobTitle: '',
       jobDescription: '',
       hoursWorked: 0,
@@ -576,6 +833,8 @@ function InvoicesDrafts() {
     setEditingInvoiceId(null);
     setClientInfo(null);
     setLoadingInvoice(false);
+    setShowCreateNewClient(false);
+    setShowCreateNewJob(false);
   };
 
   const handleCloseModal = () => {
@@ -729,69 +988,203 @@ function InvoicesDrafts() {
                     <span>ℹ️</span> Client information not available for this invoice. Fields are disabled.
                   </div>
                 )}
-                <div className="form-group">
-                  <label>Client Name *</label>
-                  <input
-                    type="text"
-                    name="clientName"
-                    value={formData.clientName}
-                    onChange={handleInputChange}
-                    required
-                    disabled={!!editingInvoiceId}
-                  />
-                  {editingInvoiceId && <small>Client cannot be changed when editing</small>}
-                </div>
+                
+                {!showCreateNewClient ? (
+                  <>
+                    <div className="form-group">
+                      <label>Select Client *</label>
+                      <select
+                        name="selectedClientId"
+                        value={formData.selectedClientId}
+                        onChange={handleInputChange}
+                        required={!editingInvoiceId}
+                        disabled={!!editingInvoiceId || loadingClients}
+                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
+                      >
+                        <option value="">-- Select a client --</option>
+                        {loadingClients ? (
+                          <option value="" disabled>Loading clients...</option>
+                        ) : clients.length === 0 ? (
+                          <option value="" disabled>No clients found</option>
+                        ) : (
+                          clients.map((client) => (
+                            <option key={client._id || client.id} value={client._id || client.id}>
+                              {client.name || 'Unnamed Client'}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      {editingInvoiceId && <small>Client cannot be changed when editing</small>}
+                    </div>
 
-                <div className="form-group">
-                  <label>Client Email *</label>
-                  <input
-                    type="email"
-                    name="clientEmail"
-                    value={formData.clientEmail}
-                    onChange={handleInputChange}
-                    required
-                    disabled={!!editingInvoiceId}
-                  />
-                </div>
+                    {!editingInvoiceId && (
+                      <button
+                        type="button"
+                        className="btn-create-new-client"
+                        onClick={() => {
+                          setShowCreateNewClient(true);
+                          setFormData(prev => ({ ...prev, selectedClientId: '' }));
+                        }}
+                        style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
+                      >
+                        + Add New Client
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Client Name *</label>
+                      <input
+                        type="text"
+                        name="clientName"
+                        value={formData.clientName}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter client name"
+                      />
+                    </div>
 
-                <div className="form-group">
-                  <label>Client Address</label>
-                  <input
-                    type="text"
-                    name="clientAddress"
-                    value={formData.clientAddress}
-                    onChange={handleInputChange}
-                    disabled={!!editingInvoiceId}
-                  />
-                </div>
+                    <div className="form-group">
+                      <label>Client Email</label>
+                      <input
+                        type="email"
+                        name="clientEmail"
+                        value={formData.clientEmail}
+                        onChange={handleInputChange}
+                        placeholder="client@example.com"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Client Address</label>
+                      <input
+                        type="text"
+                        name="clientAddress"
+                        value={formData.clientAddress}
+                        onChange={handleInputChange}
+                        placeholder="Enter client address"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn-cancel-new-client"
+                      onClick={() => {
+                        setShowCreateNewClient(false);
+                        setFormData(prev => ({
+                          ...prev,
+                          clientName: '',
+                          clientEmail: '',
+                          clientAddress: ''
+                        }));
+                      }}
+                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      Cancel - Select Existing Client
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Job Information */}
               <div className="form-section">
                 <h3>Job Details</h3>
-                <div className="form-group">
-                  <label>Job Title *</label>
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Website Building"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Job Description *</label>
-                  <input
-                    type="text"
-                    name="jobDescription"
-                    value={formData.jobDescription}
-                    onChange={handleInputChange}
-                    placeholder="e.g., built a full stack website"
-                    required
-                  />
-                </div>
+                
+                {!showCreateNewJob ? (
+                  <>
+                    <div className="form-group">
+                      <label>Select Job (Optional)</label>
+                      <select
+                        name="selectedJobId"
+                        value={formData.selectedJobId}
+                        onChange={(e) => {
+                          handleInputChange(e);
+                          // If a job is selected, fetch its details to populate title
+                          if (e.target.value) {
+                            const selectedJob = pendingJobs.find(j => (j._id || j.id) === e.target.value);
+                            if (selectedJob) {
+                              setFormData(prev => ({
+                                ...prev,
+                                selectedJobId: e.target.value,
+                                jobTitle: selectedJob.title || prev.jobTitle
+                              }));
+                            }
+                          }
+                        }}
+                        disabled={loadingJobs}
+                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
+                      >
+                        <option value="">-- Select a job (optional) --</option>
+                        {loadingJobs ? (
+                          <option value="" disabled>Loading jobs...</option>
+                        ) : pendingJobs.length === 0 ? (
+                          <option value="" disabled>No pending jobs found</option>
+                        ) : (
+                          pendingJobs.map((job) => (
+                            <option key={job._id || job.id} value={job._id || job.id}>
+                              {job.title || 'Untitled Job'} {job.clientId ? '(with client)' : ''}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
 
-                <div className="form-group">
+                    <button
+                      type="button"
+                      className="btn-create-new-job"
+                      onClick={() => {
+                        setShowCreateNewJob(true);
+                        setFormData(prev => ({ ...prev, selectedJobId: '' }));
+                      }}
+                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      + Create New Job
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Job Title *</label>
+                      <input
+                        type="text"
+                        name="jobTitle"
+                        value={formData.jobTitle}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Website Building"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Job Description</label>
+                      <input
+                        type="text"
+                        name="jobDescription"
+                        value={formData.jobDescription}
+                        onChange={handleInputChange}
+                        placeholder="e.g., built a full stack website"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn-cancel-new-job"
+                      onClick={() => {
+                        setShowCreateNewJob(false);
+                        setFormData(prev => ({
+                          ...prev,
+                          jobTitle: '',
+                          jobDescription: ''
+                        }));
+                      }}
+                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      Cancel - Select Existing Job
+                    </button>
+                  </>
+                )}
+
+                <div className="form-group" style={{ marginTop: '20px' }}>
                   <label>Hours Worked</label>
                   <input
                     type="number"

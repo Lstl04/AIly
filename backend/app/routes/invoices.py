@@ -159,8 +159,9 @@ async def create_invoice(invoice: InvoiceCreate):
     result = db.invoices.insert_one(invoice_dict)
     invoice_id_obj = result.inserted_id
     
-    # Create job after invoice is created (only if we have a clientId)
-    if client_id_obj:
+    # Create job after invoice is created (only if we have a clientId AND no jobId was provided)
+    # If a jobId was already provided, use that job instead of creating a new one
+    if client_id_obj and not invoice_dict.get("jobId"):
         # Use the invoice creator's userId (not the client's userId)
         invoice_creator_user_id = ObjectId(invoice.userId)
         

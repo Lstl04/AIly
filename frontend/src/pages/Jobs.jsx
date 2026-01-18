@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useLocation } from 'react-router-dom';
 import './Jobs.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -72,8 +73,58 @@ const createGoogleCalendarEvent = async (job) => {
   }
 };
 
+// Helper function to delete Google Calendar event
+const deleteGoogleCalendarEvent = async (eventId) => {
+  try {
+    // Get Google Calendar token and calendar ID from localStorage
+    const googleToken = localStorage.getItem('google_calendar_token');
+    const calendarId = localStorage.getItem('google_calendar_selected_id') || 'primary';
+    
+    if (!googleToken) {
+      console.log('Google Calendar not connected, skipping event deletion');
+      return false;
+    }
+    
+    // Check if token is expired
+    const tokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+    if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
+      console.log('Google Calendar token expired, skipping event deletion');
+      return false;
+    }
+    
+    if (!eventId) {
+      console.log('No event ID provided, skipping event deletion');
+      return false;
+    }
+    
+    // Delete event from Google Calendar
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+        },
+      }
+    );
+    
+    if (response.ok || response.status === 204) {
+      console.log('Google Calendar event deleted:', eventId);
+      return true;
+    } else {
+      const errorData = await response.text();
+      console.error('Error deleting Google Calendar event:', errorData);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error deleting Google Calendar event:', error);
+    return false;
+  }
+};
+
 function Jobs() {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const location = useLocation();
   const [plannedJobs, setPlannedJobs] = useState([]);
   const [pastJobs, setPastJobs] = useState([]);
   const [activeTab, setActiveTab] = useState('planned'); // 'planned' or 'past'
@@ -85,12 +136,20 @@ function Jobs() {
     startTime: '',
     endTime: '',
     predictedHours: '',
-    materials: ''
+    materials: '',
+    addClient: false,
+    selectedClientId: '',
+    clientName: '',
+    clientEmail: '',
+    clientAddress: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [mongoUserId, setMongoUserId] = useState(null);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [showCreateNewClient, setShowCreateNewClient] = useState(false);
 
   // Fetch MongoDB user ID from profile
   useEffect(() => {
@@ -119,33 +178,94 @@ function Jobs() {
     fetchUserId();
   }, [isAuthenticated, getAccessTokenSilently]);
 
+  // Fetch jobs function - extracted so it can be called from multiple places
+  const fetchJobs = useCallback(async () => {
+    if (!mongoUserId) return;
+    
+    setIsLoadingJobs(true);
+    try {
+      const response = await fetch(`${API_URL}/jobs/?user_id=${mongoUserId}`);
+      if (response.ok) {
+        const jobs = await response.json();
+        const now = new Date();
+        
+        // Split into planned (pending/in_progress) and past (completed) jobs
+        const planned = jobs.filter(job => job.status !== 'completed');
+        const past = jobs.filter(job => job.status === 'completed');
+        
+        setPlannedJobs(planned);
+        setPastJobs(past);
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  }, [mongoUserId]);
+
   // Fetch jobs when mongoUserId is available
   useEffect(() => {
-    const fetchJobs = async () => {
-      if (!mongoUserId) return;
-      
-      setIsLoadingJobs(true);
-      try {
-        const response = await fetch(`${API_URL}/jobs/?user_id=${mongoUserId}`);
-        if (response.ok) {
-          const jobs = await response.json();
-          const now = new Date();
-          
-          // Split into planned (pending/in_progress) and past (completed) jobs
-          const planned = jobs.filter(job => job.status !== 'completed');
-          const past = jobs.filter(job => job.status === 'completed');
-          
-          setPlannedJobs(planned);
-          setPastJobs(past);
-        }
-      } catch (err) {
-        console.error('Error fetching jobs:', err);
-      } finally {
-        setIsLoadingJobs(false);
-      }
-    };
     fetchJobs();
   }, [mongoUserId]);
+
+  // Refetch jobs when navigating to the Jobs page (to catch updates from other pages)
+  useEffect(() => {
+    if (location.pathname === '/jobs' && mongoUserId) {
+      fetchJobs();
+    }
+  }, [location.pathname, mongoUserId, fetchJobs]);
+
+  // Refetch jobs when page becomes visible (to catch updates made in other tabs/pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && location.pathname === '/jobs' && mongoUserId) {
+        fetchJobs();
+      }
+    };
+
+    const handleFocus = () => {
+      if (location.pathname === '/jobs' && mongoUserId) {
+        fetchJobs();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [location.pathname, mongoUserId, fetchJobs]);
+
+  // Fetch clients when addClient is checked
+  const fetchClients = async () => {
+    if (!mongoUserId) return;
+    
+    setLoadingClients(true);
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      const response = await fetch(`${API_URL}/clients/?user_id=${mongoUserId}&archived=false`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching clients:', err);
+    } finally {
+      setLoadingClients(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -167,6 +287,89 @@ function Jobs() {
     setError(null);
 
     try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      // If "Add a client" is checked, get or create the client
+      let clientId = null;
+      let clientAddress = null;
+      if (formData.addClient) {
+        // If a client is selected from dropdown, fetch client details to get address
+        if (formData.selectedClientId) {
+          try {
+            const clientResponse = await fetch(`${API_URL}/clients/${formData.selectedClientId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            if (!clientResponse.ok) {
+              const errorData = await clientResponse.json().catch(() => ({}));
+              throw new Error(errorData.detail || 'Failed to fetch client details');
+            }
+
+            const selectedClient = await clientResponse.json();
+            clientId = selectedClient._id || selectedClient.id;
+            clientAddress = selectedClient.address || null;
+            console.log('Client selected:', selectedClient);
+          } catch (clientError) {
+            console.error('Error fetching client:', clientError);
+            setError(clientError.message || 'Failed to fetch client details. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
+        } 
+        // If creating new client, create it first
+        else if (showCreateNewClient && formData.clientName.trim()) {
+          try {
+            const clientData = {
+              userId: mongoUserId,
+              name: formData.clientName.trim(),
+              email: formData.clientEmail.trim() || undefined,
+              address: formData.clientAddress.trim() || undefined,
+              archived: false
+            };
+
+            const clientResponse = await fetch(`${API_URL}/clients/`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(clientData),
+            });
+
+            if (!clientResponse.ok) {
+              const errorData = await clientResponse.json().catch(() => ({}));
+              throw new Error(errorData.detail || 'Failed to create client');
+            }
+
+            const createdClient = await clientResponse.json();
+            clientId = createdClient._id || createdClient.id;
+            clientAddress = createdClient.address || null;
+            console.log('Client created:', createdClient);
+          } catch (clientError) {
+            console.error('Error creating client:', clientError);
+            setError(clientError.message || 'Failed to create client. Please try again.');
+            setIsSubmitting(false);
+            return;
+          }
+        } else if (showCreateNewClient) {
+          // If create new client is shown but no name provided
+          setError('Please select a client or create a new one with a name.');
+          setIsSubmitting(false);
+          return;
+        } else {
+          // If checkbox is checked but no client selected
+          setError('Please select a client or create a new one.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Prepare job data for backend
       const jobData = {
         userId: mongoUserId,
@@ -175,6 +378,16 @@ function Jobs() {
         startTime: new Date(formData.startTime).toISOString(),
         endTime: new Date(formData.endTime).toISOString(),
       };
+
+      // Add clientId if client was selected/created
+      if (clientId) {
+        jobData.clientId = clientId;
+      }
+
+      // Add location (client address) if client has an address
+      if (clientAddress) {
+        jobData.location = clientAddress;
+      }
 
       if (isEditing && editingJobId) {
         // Update existing job
@@ -224,9 +437,33 @@ function Jobs() {
         console.log('Job created:', createdJob);
 
         // Create Google Calendar event if job is not completed
+        let finalJob = createdJob;
         if (createdJob.status !== 'completed') {
           try {
-            await createGoogleCalendarEvent(createdJob);
+            const eventId = await createGoogleCalendarEvent(createdJob);
+            // Update job with the calendar event ID if event was created
+            if (eventId) {
+              const updateResponse = await fetch(`${API_URL}/jobs/${createdJob._id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  userId: createdJob.userId,
+                  title: createdJob.title,
+                  status: createdJob.status,
+                  startTime: createdJob.startTime,
+                  endTime: createdJob.endTime,
+                  location: createdJob.location,
+                  clientId: createdJob.clientId,
+                  googleCalendarEventId: eventId
+                })
+              });
+              
+              if (updateResponse.ok) {
+                finalJob = await updateResponse.json();
+              }
+            }
           } catch (error) {
             console.error('Failed to create Google Calendar event:', error);
             // Don't fail the job creation if calendar event fails
@@ -234,7 +471,7 @@ function Jobs() {
         }
 
         // Add to planned jobs list
-        setPlannedJobs(prev => [...prev, createdJob]);
+        setPlannedJobs(prev => [...prev, finalJob]);
       }
 
       // Reset form and close modal
@@ -243,8 +480,14 @@ function Jobs() {
         startTime: '',
         endTime: '',
         predictedHours: '',
-        materials: ''
+        materials: '',
+        addClient: false,
+        selectedClientId: '',
+        clientName: '',
+        clientEmail: '',
+        clientAddress: ''
       });
+      setShowCreateNewClient(false);
       setShowCreateModal(false);
       setIsEditing(false);
       setEditingJobId(null);
@@ -257,7 +500,7 @@ function Jobs() {
     }
   };
 
-  const handleEditJob = (job) => {
+  const handleEditJob = async (job) => {
     setIsEditing(true);
     setEditingJobId(job._id);
     
@@ -265,13 +508,28 @@ function Jobs() {
     const startDate = new Date(job.startTime);
     const endDate = new Date(job.endTime);
     
+    // Check if job has a clientId
+    const hasClient = !!(job.clientId || job.client_id);
+    const clientId = job.clientId || job.client_id || '';
+    
     setFormData({
       title: job.title,
       startTime: formatDateTimeLocal(startDate),
       endTime: formatDateTimeLocal(endDate),
       predictedHours: '',
-      materials: ''
+      materials: '',
+      addClient: hasClient,
+      selectedClientId: clientId,
+      clientName: '',
+      clientEmail: '',
+      clientAddress: ''
     });
+    setShowCreateNewClient(false);
+    
+    // If job has a client, fetch clients list to populate dropdown
+    if (hasClient && mongoUserId) {
+      await fetchClients();
+    }
     
     setShowCreateModal(true);
   };
@@ -286,6 +544,16 @@ function Jobs() {
       const job = plannedJobs.find(j => j._id === jobId);
       if (!job) return;
 
+      // Delete Google Calendar event if it exists
+      if (job.googleCalendarEventId) {
+        try {
+          await deleteGoogleCalendarEvent(job.googleCalendarEventId);
+        } catch (error) {
+          console.error('Failed to delete Google Calendar event:', error);
+          // Don't fail the job completion if calendar event deletion fails
+        }
+      }
+
       // Update job status to completed
       const jobData = {
         userId: job.userId,
@@ -293,6 +561,7 @@ function Jobs() {
         status: 'completed',
         startTime: job.startTime,
         endTime: job.endTime,
+        googleCalendarEventId: null // Clear the event ID
       };
 
       const response = await fetch(`${API_URL}/jobs/${jobId}`, {
@@ -326,6 +595,19 @@ function Jobs() {
     }
 
     try {
+      // Find the job in planned or past jobs to get the calendar event ID
+      const job = plannedJobs.find(j => j._id === jobId) || pastJobs.find(j => j._id === jobId);
+      
+      // Delete Google Calendar event if it exists
+      if (job && job.googleCalendarEventId) {
+        try {
+          await deleteGoogleCalendarEvent(job.googleCalendarEventId);
+        } catch (error) {
+          console.error('Failed to delete Google Calendar event:', error);
+          // Don't fail the job deletion if calendar event deletion fails
+        }
+      }
+
       const response = await fetch(`${API_URL}/jobs/${jobId}`, {
         method: 'DELETE',
       });
@@ -370,8 +652,14 @@ function Jobs() {
       startTime: '',
       endTime: '',
       predictedHours: '',
-      materials: ''
+      materials: '',
+      addClient: false,
+      selectedClientId: '',
+      clientName: '',
+      clientEmail: '',
+      clientAddress: ''
     });
+    setShowCreateNewClient(false);
     setError(null);
   };
 
@@ -565,14 +853,14 @@ function Jobs() {
 
                   <div className="job-card-footer">
                     <button 
-                      className="job-action-btn" 
-                      title="View Details"
+                      className="job-action-btn delete" 
+                      title="Delete Job"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('View details:', job._id);
+                        handleDeleteJob(job._id);
                       }}
                     >
-                      👁️
+                      🗑️
                     </button>
                     {job.invoiceId && (
                       <button 
@@ -694,6 +982,153 @@ function Jobs() {
                 />
                 <small className="field-hint">Optional: For your planning reference</small>
               </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="addClient"
+                    checked={formData.addClient}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      setFormData(prev => ({
+                        ...prev,
+                        addClient: checked,
+                        // Clear client fields when unchecking
+                        selectedClientId: checked ? prev.selectedClientId : '',
+                        clientName: checked ? prev.clientName : '',
+                        clientEmail: checked ? prev.clientEmail : '',
+                        clientAddress: checked ? prev.clientAddress : ''
+                      }));
+                      setShowCreateNewClient(false);
+                      
+                      // Fetch clients when checkbox is checked
+                      if (checked && mongoUserId) {
+                        await fetchClients();
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                  <span>Add a client</span>
+                </label>
+              </div>
+
+              {formData.addClient && (
+                <div className="client-fields-section">
+                  <h3 className="section-title">Client Information</h3>
+                  
+                  {!showCreateNewClient ? (
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="selectedClientId">
+                          Select Client
+                        </label>
+                        <select
+                          id="selectedClientId"
+                          name="selectedClientId"
+                          value={formData.selectedClientId}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting || loadingClients}
+                          className="client-select"
+                        >
+                          <option value="">-- Select a client --</option>
+                          {loadingClients ? (
+                            <option value="" disabled>Loading clients...</option>
+                          ) : clients.length === 0 ? (
+                            <option value="" disabled>No clients found</option>
+                          ) : (
+                            clients.map((client) => (
+                              <option key={client._id || client.id} value={client._id || client.id}>
+                                {client.name || 'Unnamed Client'}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-create-new-client"
+                        onClick={() => {
+                          setShowCreateNewClient(true);
+                          setFormData(prev => ({
+                            ...prev,
+                            selectedClientId: '' // Clear selection when creating new
+                          }));
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        + Create New Client
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="clientName">
+                          Client Name *
+                        </label>
+                        <input
+                          type="text"
+                          id="clientName"
+                          name="clientName"
+                          value={formData.clientName}
+                          onChange={handleInputChange}
+                          placeholder="Enter client name"
+                          required={showCreateNewClient}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="clientEmail">
+                          Client Email
+                        </label>
+                        <input
+                          type="email"
+                          id="clientEmail"
+                          name="clientEmail"
+                          value={formData.clientEmail}
+                          onChange={handleInputChange}
+                          placeholder="client@example.com"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="clientAddress">
+                          Client Address
+                        </label>
+                        <textarea
+                          id="clientAddress"
+                          name="clientAddress"
+                          value={formData.clientAddress}
+                          onChange={handleInputChange}
+                          placeholder="Enter client address"
+                          rows="3"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-cancel-new-client"
+                        onClick={() => {
+                          setShowCreateNewClient(false);
+                          setFormData(prev => ({
+                            ...prev,
+                            clientName: '',
+                            clientEmail: '',
+                            clientAddress: ''
+                          }));
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        Cancel - Select Existing Client
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="form-actions">
                 <button

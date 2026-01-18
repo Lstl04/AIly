@@ -34,7 +34,8 @@ function CalendarContent() {
           const expiryTime = parseInt(savedTokenExpiry);
           const now = Date.now();
           
-          if (now < expiryTime) {
+          // Add a 5-minute buffer to account for clock skew and early expiration
+          if (now < (expiryTime - 5 * 60 * 1000)) {
             // Token is still valid, restore session
             console.log('Restoring Google Calendar session...');
             setAccessToken(savedToken);
@@ -44,15 +45,24 @@ function CalendarContent() {
             const calendarList = await loadCalendarList(savedToken);
             setCalendars(calendarList);
             
-            // Restore selected calendar or use PersonalCFO calendar
-            let calendarToUse = savedCalendarId || 'primary';
-            const personalCFOCalendar = calendarList.find(cal => cal.name === 'PersonalCFO');
-            if (personalCFOCalendar) {
-              calendarToUse = personalCFOCalendar.id;
+            // Only proceed if calendar list was loaded successfully
+            if (calendarList.length > 0) {
+              // Restore selected calendar or use PersonalCFO calendar
+              let calendarToUse = savedCalendarId || 'primary';
+              const personalCFOCalendar = calendarList.find(cal => cal.name === 'PersonalCFO');
+              if (personalCFOCalendar) {
+                calendarToUse = personalCFOCalendar.id;
+              }
+              
+              setSelectedCalendarId(calendarToUse);
+              await loadGoogleCalendar(savedToken, calendarToUse);
+            } else {
+              // If calendar list failed to load, clear session
+              console.log('Failed to load calendar list, clearing session');
+              clearGoogleSession();
+              setIsGoogleSignedIn(false);
+              setAccessToken(null);
             }
-            
-            setSelectedCalendarId(calendarToUse);
-            await loadGoogleCalendar(savedToken, calendarToUse);
           } else {
             // Token expired, clear storage
             console.log('Google Calendar token expired');
@@ -62,6 +72,8 @@ function CalendarContent() {
       } catch (error) {
         console.error('Error restoring Google Calendar session:', error);
         clearGoogleSession();
+        setIsGoogleSignedIn(false);
+        setAccessToken(null);
       }
     };
     
@@ -162,6 +174,17 @@ function CalendarContent() {
   const loadCalendarList = async (token) => {
     try {
       console.log('Fetching calendar list...');
+      
+      // Check if token is expired before making the request
+      const savedTokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+      if (savedTokenExpiry && Date.now() > parseInt(savedTokenExpiry)) {
+        console.log('Token expired, clearing session');
+        clearGoogleSession();
+        setIsGoogleSignedIn(false);
+        setAccessToken(null);
+        return [];
+      }
+      
       const response = await fetch(
         'https://www.googleapis.com/calendar/v3/users/me/calendarList',
         {
@@ -185,8 +208,17 @@ function CalendarContent() {
         setCalendars(calendarList);
         return calendarList;
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         console.error('Error fetching calendar list:', errorData);
+        
+        // Check if it's an authentication error
+        if (response.status === 401 || errorData.error?.message?.includes('invalid authentication')) {
+          console.log('Authentication error detected, clearing session');
+          clearGoogleSession();
+          setIsGoogleSignedIn(false);
+          setAccessToken(null);
+        }
+        
         return [];
       }
     } catch (error) {
@@ -201,6 +233,18 @@ function CalendarContent() {
       setLoading(true);
       setError(null);
       console.log('Fetching events for calendar:', calendarId);
+      
+      // Check if token is expired before making the request
+      const savedTokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+      if (savedTokenExpiry && Date.now() > parseInt(savedTokenExpiry)) {
+        console.log('Token expired, clearing session');
+        clearGoogleSession();
+        setIsGoogleSignedIn(false);
+        setAccessToken(null);
+        setError('Your Google Calendar session has expired. Please reconnect.');
+        setLoading(false);
+        return;
+      }
       
       // Get events from 6 months ago to 6 months in the future
       const timeMin = new Date();
@@ -247,9 +291,19 @@ function CalendarContent() {
         console.log('Formatted events:', formattedEvents);
         setEvents(formattedEvents);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         console.error('Error response:', errorData);
-        setError(`Failed to load events: ${errorData.error?.message || 'Unknown error'}`);
+        
+        // Check if it's an authentication error
+        if (response.status === 401 || errorData.error?.message?.includes('invalid authentication')) {
+          console.log('Authentication error detected, clearing session');
+          clearGoogleSession();
+          setIsGoogleSignedIn(false);
+          setAccessToken(null);
+          setError('Your Google Calendar session has expired. Please reconnect by clicking "Connect Google Calendar".');
+        } else {
+          setError(`Failed to load events: ${errorData.error?.message || 'Unknown error'}`);
+        }
       }
     } catch (error) {
       console.error('Error loading Google Calendar events:', error);

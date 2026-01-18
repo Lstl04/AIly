@@ -94,6 +94,7 @@ class ClientBase(BaseModel):
     email: Optional[str] = None
     userId: Optional[str] = None  # Reference to user
     address: Optional[str] = None
+    archived: Optional[bool] = False
 
 class ClientCreate(ClientBase):
     """Model for creating a new client"""
@@ -134,6 +135,7 @@ class JobBase(BaseModel):
     endTime: Optional[datetime] = None
     location: Optional[str] = None
     invoiceId: Optional[str] = None
+    googleCalendarEventId: Optional[str] = None
 
 class JobCreate(JobBase):
     """Model for creating a new job"""
