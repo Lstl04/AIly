@@ -202,7 +202,8 @@ async def get_client_jobs(client_id: str, status_filter: str = None):
     # Add invoice info if exists
     for job in jobs:
         if job.get("invoiceId"):
-            invoice = db.invoices.find_one({"_id": ObjectId(job["invoiceId"])})
+            # invoiceId is already ObjectId, use it directly
+            invoice = db.invoices.find_one({"_id": job["invoiceId"]})
             if invoice:
                 job["invoiceNumber"] = invoice.get("invoiceNumber")
                 job["invoiceStatus"] = invoice.get("status")

@@ -2,6 +2,74 @@ import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import './Invoices.css';
 
+// Helper function to create Google Calendar event
+const createGoogleCalendarEvent = async (job) => {
+  try {
+    // Get Google Calendar token and calendar ID from localStorage
+    const googleToken = localStorage.getItem('google_calendar_token');
+    const calendarId = localStorage.getItem('google_calendar_selected_id') || 'primary';
+    
+    if (!googleToken) {
+      console.log('Google Calendar not connected, skipping event creation');
+      return null;
+    }
+    
+    // Check if token is expired
+    const tokenExpiry = localStorage.getItem('google_calendar_token_expiry');
+    if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
+      console.log('Google Calendar token expired, skipping event creation');
+      return null;
+    }
+    
+    // Only create event if job status is not "completed"
+    if (job.status === 'completed') {
+      console.log('Job is completed, skipping calendar event creation');
+      return null;
+    }
+    
+    // Prepare event data
+    const eventData = {
+      summary: job.title || 'Job',
+      description: `Job: ${job.title || 'Untitled'}`,
+      start: {
+        dateTime: job.startTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      end: {
+        dateTime: job.endTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      location: job.location || '',
+    };
+    
+    // Create event in Google Calendar
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    
+    if (response.ok) {
+      const event = await response.json();
+      console.log('Google Calendar event created:', event.id);
+      return event.id;
+    } else {
+      const errorData = await response.json();
+      console.error('Error creating Google Calendar event:', errorData);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error creating Google Calendar event:', error);
+    return null;
+  }
+};
+
 function InvoicesDrafts() {
   const { user, getAccessTokenSilently } = useAuth0();
   const [invoices, setInvoices] = useState([]);
@@ -153,6 +221,7 @@ function InvoicesDrafts() {
       });
 
       // Step 1: Create client (only if not editing)
+      let createdClientId = "";
       if (!editingInvoiceId) {
         const clientData = {
           userId: userProfile._id,
@@ -180,6 +249,7 @@ function InvoicesDrafts() {
 
         const client = await clientResponse.json();
         console.log('Client created:', client);
+        createdClientId = client._id || client.id;
       }
 
       // Step 2: Prepare line items (without job description)
@@ -210,7 +280,7 @@ function InvoicesDrafts() {
       // Step 3: Create or update invoice
       const invoiceData = {
         userId: userProfile._id,
-        clientId: "", // Empty string as requested
+        clientId: createdClientId, // Use the clientId from the client we just created
         jobId: "", // Empty string as requested
         invoiceTitle: formData.jobTitle || '',
         invoiceDescription: formData.jobDescription || '',
@@ -254,6 +324,29 @@ function InvoicesDrafts() {
 
       const invoice = await invoiceResponse.json();
       console.log('Invoice saved successfully:', invoice);
+
+      // If invoice was created (not edited) and has a jobId, check if we should create calendar event
+      if (!editingInvoiceId && invoice.jobId) {
+        try {
+          // Fetch the job to check its status
+          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${invoice.jobId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          if (jobResponse.ok) {
+            const job = await jobResponse.json();
+            // Create calendar event if job is not completed
+            if (job.status !== 'completed') {
+              await createGoogleCalendarEvent(job);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to create Google Calendar event for invoice job:', error);
+          // Don't fail invoice creation if calendar event fails
+        }
+      }
 
       // Success! Close modal, reset form, and refresh
       handleCloseModal();

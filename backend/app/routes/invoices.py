@@ -103,7 +103,8 @@ async def create_invoice(invoice: InvoiceCreate):
             detail="User not found"
         )
     
-    # Validate client ID only if provided and not empty
+    # Validate and get client ID
+    client_id_obj = None
     if invoice.clientId and invoice.clientId.strip():
         if not ObjectId.is_valid(invoice.clientId):
             raise HTTPException(
@@ -119,11 +120,17 @@ async def create_invoice(invoice: InvoiceCreate):
                 detail="Client not found"
             )
         
-        # Auto-link client to user if client doesn't have a userId
-        if not client.get("userId"):
+        client_id_obj = ObjectId(invoice.clientId)
+        
+        # Ensure client is linked to the invoice creator's userId
+        # If client has a different userId, update it to match the invoice creator
+        client_user_id = client.get("userId")
+        invoice_user_id_obj = ObjectId(invoice.userId)
+        
+        if not client_user_id or ObjectId(client_user_id) != invoice_user_id_obj:
             db.clients.update_one(
                 {"_id": ObjectId(invoice.clientId)},
-                {"$set": {"userId": ObjectId(invoice.userId)}}
+                {"$set": {"userId": invoice_user_id_obj}}
             )
     
     # Auto-generate invoice number if not provided
@@ -143,16 +150,63 @@ async def create_invoice(invoice: InvoiceCreate):
     # Convert userId to ObjectId
     if invoice_dict.get("userId"):
         invoice_dict["userId"] = ObjectId(invoice_dict["userId"])
-    # Convert clientId to ObjectId if provided and not empty
-    if invoice_dict.get("clientId") and invoice_dict["clientId"].strip():
-        invoice_dict["clientId"] = ObjectId(invoice_dict["clientId"])
+    # Set clientId if we found one
+    if client_id_obj:
+        invoice_dict["clientId"] = client_id_obj
     # Convert jobId to ObjectId if provided and not empty
     if invoice_dict.get("jobId") and invoice_dict["jobId"].strip():
         invoice_dict["jobId"] = ObjectId(invoice_dict["jobId"])
     result = db.invoices.insert_one(invoice_dict)
+    invoice_id_obj = result.inserted_id
+    
+    # Create job after invoice is created (only if we have a clientId)
+    if client_id_obj:
+        # Use the invoice creator's userId (not the client's userId)
+        invoice_creator_user_id = ObjectId(invoice.userId)
+        
+        # Re-fetch client to get the client's address for job location
+        # The job location should be where the work was performed (client's address)
+        client_for_job = db.clients.find_one({"_id": client_id_obj})
+        if not client_for_job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Client not found when creating job"
+            )
+        
+        # Get client's address for job location (where the work was performed)
+        job_location = client_for_job.get("address") or ""
+        
+        # Debug: Print to verify we're using the correct address
+        print(f"DEBUG: Creating job for invoice. Invoice userId: {invoice_creator_user_id}, Client ID: {client_id_obj}, Client Address: {job_location}")
+        
+        # Use invoice dates for job start/end times, or current time if not available
+        start_time = invoice.issueDate if invoice.issueDate else datetime.utcnow()
+        end_time = invoice.dueDate if invoice.dueDate else datetime.utcnow()
+        
+        # Create job data
+        job_data = {
+            "userId": ObjectId(invoice.userId),
+            "clientId": client_id_obj,
+            "invoiceId": ObjectId(invoice_id_obj),  # Store as ObjectId
+            "title": invoice.invoiceTitle or invoice.invoiceDescription or "Invoice Job",
+            "status": "completed",  # User said "done" but model uses "completed"
+            "location": job_location,  # Use client's address, not user's business address
+            "startTime": start_time,
+            "endTime": end_time
+        }
+        
+        # Insert job
+        job_result = db.jobs.insert_one(job_data)
+        job_id_obj = job_result.inserted_id
+        
+        # Update invoice with jobId (store as ObjectId)
+        db.invoices.update_one(
+            {"_id": invoice_id_obj},
+            {"$set": {"jobId": ObjectId(job_id_obj)}}
+        )
     
     # Return created invoice - convert ObjectId fields to strings for response
-    created_invoice = db.invoices.find_one({"_id": result.inserted_id})
+    created_invoice = db.invoices.find_one({"_id": invoice_id_obj})
     if created_invoice:
         created_invoice = convert_objectid_to_str(created_invoice)
     return created_invoice

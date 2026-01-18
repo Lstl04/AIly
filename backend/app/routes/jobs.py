@@ -66,6 +66,10 @@ async def create_job(job: JobCreate):
     # Convert clientId to ObjectId if provided and not empty
     if job_dict.get("clientId") and job_dict["clientId"].strip():
         job_dict["clientId"] = ObjectId(job_dict["clientId"])
+    # Convert invoiceId to ObjectId if provided and not empty
+    if job_dict.get("invoiceId") and job_dict["invoiceId"].strip():
+        if ObjectId.is_valid(job_dict["invoiceId"]):
+            job_dict["invoiceId"] = ObjectId(job_dict["invoiceId"])
     result = db.jobs.insert_one(job_dict)
     
     # Return created job - convert ObjectId fields to strings for response
@@ -153,7 +157,7 @@ async def update_job(job_id: str, job_update: JobUpdate):
             detail="No fields to update"
         )
     
-    # Convert userId and clientId to ObjectId if present in update data
+    # Convert userId, clientId, and invoiceId to ObjectId if present in update data
     if update_data.get("userId"):
         if ObjectId.is_valid(update_data["userId"]):
             update_data["userId"] = ObjectId(update_data["userId"])
@@ -169,6 +173,14 @@ async def update_job(job_id: str, job_update: JobUpdate):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid client ID format"
+            )
+    if update_data.get("invoiceId") and update_data["invoiceId"].strip():
+        if ObjectId.is_valid(update_data["invoiceId"]):
+            update_data["invoiceId"] = ObjectId(update_data["invoiceId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid invoice ID format"
             )
     
     result = db.jobs.update_one(
@@ -256,7 +268,9 @@ async def get_job_details(job_id: str):
     # Get invoice details if exists
     invoice_details = None
     if job.get("invoiceId"):
-        invoice = db.invoices.find_one({"_id": ObjectId(job["invoiceId"])})
+        # invoiceId is stored as ObjectId, use it directly
+        invoice_id = job["invoiceId"] if isinstance(job["invoiceId"], ObjectId) else ObjectId(job["invoiceId"])
+        invoice = db.invoices.find_one({"_id": invoice_id})
         if invoice:
             invoice_details = {
                 "_id": str(invoice["_id"]),
@@ -295,7 +309,9 @@ async def get_job_invoice(job_id: str):
     
     # Get invoice
     if job.get("invoiceId"):
-        invoice = db.invoices.find_one({"_id": ObjectId(job["invoiceId"])})
+        # invoiceId is stored as ObjectId, use it directly
+        invoice_id = job["invoiceId"] if isinstance(job["invoiceId"], ObjectId) else ObjectId(job["invoiceId"])
+        invoice = db.invoices.find_one({"_id": invoice_id})
         if invoice:
             return invoice
     
