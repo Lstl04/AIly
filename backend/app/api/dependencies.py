@@ -11,22 +11,34 @@ AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE")
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
+    
+
+    
     try:
-        # 1. Decode the token (Open the envelope)
+        # First, decode without verification to see what's in the token
+        unverified_payload = jwt.decode(
+            token,
+            key=None,
+            options={"verify_signature": False, "verify_aud": False, "verify_exp": False}
+        )
+        
+        
+        # Now decode with verification
         # Note: We are skipping signature verification for Hackathon speed ("verify_signature": False)
         # In production, you would fetch the public key from Auth0 to verify the signature.
         payload = jwt.decode(
             token,
             key=None,
-            options={"verify_signature": False, "verify_aud": True},
+            options={"verify_signature": False, "verify_aud": True, "verify_exp": False},
             audience=AUTH0_AUDIENCE,
             issuer=f"https://{AUTH0_DOMAIN}/"
         )
-        print(payload)
+        
         return payload # Returns the dict: {"sub": "auth0|123", ...}
 
     except JWTError as e:
+        print(f"JWT Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials {str(e)}",
         )
