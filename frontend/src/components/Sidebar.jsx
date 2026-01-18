@@ -24,13 +24,27 @@ function Sidebar({ user }) {
 
   const fetchInvoiceCounts = async () => {
     try {
-      if (!user?.sub) return;
-
       const token = await getAccessTokenSilently({
         authorizationParams: {
           audience: "https://personalcfo.com"
         }
       });
+
+      // Get user profile to get MongoDB _id
+      const profileResponse = await fetch('http://127.0.0.1:8000/api/users/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!profileResponse.ok) {
+        return;
+      }
+      
+      const profile = await profileResponse.json();
+      const userId = profile._id;
+      
+      if (!userId) return;
 
       // Fetch counts for each status
       const statuses = ['draft', 'sent', 'paid', 'overdue'];
@@ -40,7 +54,7 @@ function Sidebar({ user }) {
         statuses.map(async (status) => {
           try {
             const response = await fetch(
-              `http://127.0.0.1:8000/api/invoices/?user_id=${user.sub}&status_filter=${status}`,
+              `http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=${status}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,

@@ -65,9 +65,18 @@ function Home() {
   // Fetch MongoDB user ID
   useEffect(() => {
     const fetchUserId = async () => {
-      if (isAuthenticated && user?.sub) {
+      if (isAuthenticated) {
         try {
-          const response = await fetch(`${API_URL}/users/by-auth0/${encodeURIComponent(user.sub)}`);
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://personalcfo.com"
+            }
+          });
+          const response = await fetch(`${API_URL}/users/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           if (response.ok) {
             const userData = await response.json();
             setMongoUserId(userData._id);
@@ -78,7 +87,7 @@ function Home() {
       }
     };
     fetchUserId();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   // Fetch dashboard data when user ID is available
   useEffect(() => {

@@ -10,7 +10,7 @@ const GUMLOOP_SAVED_ITEM_ID = import.meta.env.VITE_GUMLOOP_SAVED_ITEM_ID || '5kt
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 function Expenses() {
-  const { user, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const fileInputRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
@@ -24,12 +24,21 @@ function Expenses() {
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
   const [activeView, setActiveView] = useState('scan'); // 'scan' or 'list'
 
-  // Fetch MongoDB user ID from Auth0 sub
+  // Fetch MongoDB user ID from profile
   useEffect(() => {
     const fetchUserId = async () => {
-      if (isAuthenticated && user?.sub) {
+      if (isAuthenticated) {
         try {
-          const response = await fetch(`${API_URL}/users/by-auth0/${encodeURIComponent(user.sub)}`);
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://personalcfo.com"
+            }
+          });
+          const response = await fetch(`${API_URL}/users/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           if (response.ok) {
             const userData = await response.json();
             setMongoUserId(userData._id);
@@ -40,7 +49,7 @@ function Expenses() {
       }
     };
     fetchUserId();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   // Fetch existing expenses when mongoUserId is available
   const fetchExpenses = async () => {

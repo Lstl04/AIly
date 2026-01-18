@@ -1,19 +1,52 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Dict, Any
 from bson import ObjectId
+from datetime import datetime
 
 from ..models import Job, JobCreate, JobUpdate, MessageResponse
 from ..database import get_database
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
+def convert_objectid_to_str(doc):
+    """Convert ObjectId fields to strings for JSON serialization"""
+    if doc is None:
+        return None
+    if isinstance(doc, dict):
+        result = {}
+        for key, value in doc.items():
+            if isinstance(value, ObjectId):
+                result[key] = str(value)
+            elif isinstance(value, datetime):
+                result[key] = value.isoformat()
+            elif isinstance(value, dict):
+                result[key] = convert_objectid_to_str(value)
+            elif isinstance(value, list):
+                result[key] = [convert_objectid_to_str(item) for item in value]
+            else:
+                result[key] = value
+        return result
+    return doc
+
 @router.post("/", response_model=Job, status_code=status.HTTP_201_CREATED)
 async def create_job(job: JobCreate):
     """Create a new job"""
     db = get_database()
     
-    # Note: userId comes from Auth0 and is not an ObjectId, so we don't validate it
-    # Auth0 user IDs look like: "auth0|123456" or "google-oauth2|123456"
+    # Validate user ID format
+    if not ObjectId.is_valid(job.userId):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+    
+    # Verify user exists (MongoDB will handle ObjectId conversion)
+    user = db.users.find_one({"_id": ObjectId(job.userId)})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     
     # Validate client ID only if provided (and only if it looks like an ObjectId)
     if job.clientId and ObjectId.is_valid(job.clientId):
@@ -27,10 +60,18 @@ async def create_job(job: JobCreate):
     
     # Insert job
     job_dict = job.model_dump(exclude_unset=True)
+    # Convert userId to ObjectId
+    if job_dict.get("userId"):
+        job_dict["userId"] = ObjectId(job_dict["userId"])
+    # Convert clientId to ObjectId if provided and not empty
+    if job_dict.get("clientId") and job_dict["clientId"].strip():
+        job_dict["clientId"] = ObjectId(job_dict["clientId"])
     result = db.jobs.insert_one(job_dict)
     
-    # Return created job
+    # Return created job - convert ObjectId fields to strings for response
     created_job = db.jobs.find_one({"_id": result.inserted_id})
+    if created_job:
+        created_job = convert_objectid_to_str(created_job)
     return created_job
 
 @router.get("/", response_model=List[Job])
@@ -46,13 +87,29 @@ async def get_jobs(
     
     query = {}
     if user_id:
-        query["userId"] = user_id
+        # Convert user_id string to ObjectId for query
+        if ObjectId.is_valid(user_id):
+            query["userId"] = ObjectId(user_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
     if client_id:
-        query["clientId"] = client_id
+        # Convert client_id string to ObjectId for query
+        if ObjectId.is_valid(client_id):
+            query["clientId"] = ObjectId(client_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid client ID format"
+            )
     if status_filter:
         query["status"] = status_filter
     
     jobs = list(db.jobs.find(query).skip(skip).limit(limit))
+    # Convert ObjectId fields to strings for response
+    jobs = [convert_objectid_to_str(job) for job in jobs]
     return jobs
 
 @router.get("/{job_id}", response_model=Job)
@@ -73,6 +130,8 @@ async def get_job(job_id: str):
             detail="Job not found"
         )
     
+    # Convert ObjectId fields to strings for response
+    job = convert_objectid_to_str(job)
     return job
 
 @router.put("/{job_id}", response_model=Job)
@@ -94,6 +153,24 @@ async def update_job(job_id: str, job_update: JobUpdate):
             detail="No fields to update"
         )
     
+    # Convert userId and clientId to ObjectId if present in update data
+    if update_data.get("userId"):
+        if ObjectId.is_valid(update_data["userId"]):
+            update_data["userId"] = ObjectId(update_data["userId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
+    if update_data.get("clientId") and update_data["clientId"].strip():
+        if ObjectId.is_valid(update_data["clientId"]):
+            update_data["clientId"] = ObjectId(update_data["clientId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid client ID format"
+            )
+    
     result = db.jobs.update_one(
         {"_id": ObjectId(job_id)},
         {"$set": update_data}
@@ -106,6 +183,8 @@ async def update_job(job_id: str, job_update: JobUpdate):
         )
     
     updated_job = db.jobs.find_one({"_id": ObjectId(job_id)})
+    if updated_job:
+        updated_job = convert_objectid_to_str(updated_job)
     return updated_job
 
 @router.delete("/{job_id}", response_model=MessageResponse)

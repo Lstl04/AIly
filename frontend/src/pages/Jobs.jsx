@@ -5,7 +5,7 @@ import './Jobs.css';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 function Jobs() {
-  const { user, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [plannedJobs, setPlannedJobs] = useState([]);
   const [pastJobs, setPastJobs] = useState([]);
   const [activeTab, setActiveTab] = useState('planned'); // 'planned' or 'past'
@@ -24,12 +24,21 @@ function Jobs() {
   const [mongoUserId, setMongoUserId] = useState(null);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
 
-  // Fetch MongoDB user ID from Auth0 sub
+  // Fetch MongoDB user ID from profile
   useEffect(() => {
     const fetchUserId = async () => {
-      if (isAuthenticated && user?.sub) {
+      if (isAuthenticated) {
         try {
-          const response = await fetch(`${API_URL}/users/by-auth0/${encodeURIComponent(user.sub)}`);
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://personalcfo.com"
+            }
+          });
+          const response = await fetch(`${API_URL}/users/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           if (response.ok) {
             const userData = await response.json();
             setMongoUserId(userData._id);
@@ -40,7 +49,7 @@ function Jobs() {
       }
     };
     fetchUserId();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   // Fetch jobs when mongoUserId is available
   useEffect(() => {

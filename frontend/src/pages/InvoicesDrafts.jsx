@@ -72,8 +72,12 @@ function InvoicesDrafts() {
         }
       });
 
-      // Use MongoDB user ID, not Auth0 sub
-      const userId = user?.sub;
+      // Use MongoDB user ID from profile
+      const userId = userProfile?._id;
+      if (!userId) {
+        setError('User profile not loaded');
+        return;
+      }
       const response = await fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=draft`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -151,7 +155,7 @@ function InvoicesDrafts() {
       // Step 1: Create client (only if not editing)
       if (!editingInvoiceId) {
         const clientData = {
-          userId: user?.sub,
+          userId: userProfile._id,
           name: formData.clientName,
           email: formData.clientEmail,
           address: formData.clientAddress || ''
@@ -205,7 +209,7 @@ function InvoicesDrafts() {
 
       // Step 3: Create or update invoice
       const invoiceData = {
-        userId: user?.sub,
+        userId: userProfile._id,
         clientId: "", // Empty string as requested
         jobId: "", // Empty string as requested
         invoiceTitle: formData.jobTitle || '',

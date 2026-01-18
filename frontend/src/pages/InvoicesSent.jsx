@@ -49,7 +49,21 @@ function InvoicesSent() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${user?.sub}&status_filter=sent`, {
+      // Get user profile to get MongoDB _id
+      const profileResponse = await fetch('http://127.0.0.1:8000/api/users/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!profileResponse.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      
+      const profile = await profileResponse.json();
+      const userId = profile._id;
+      
+      const response = await fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=sent`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

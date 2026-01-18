@@ -15,7 +15,9 @@ def check_and_update_overdue_invoices(user_id: str = None):
     # Build query for sent invoices
     query = {"status": "sent"}
     if user_id:
-        query["userId"] = user_id
+        # Convert user_id string to ObjectId for query
+        if ObjectId.is_valid(user_id):
+            query["userId"] = ObjectId(user_id)
     
     # Get all sent invoices
     sent_invoices = list(db.invoices.find(query))
@@ -86,9 +88,15 @@ async def create_invoice(invoice: InvoiceCreate):
     """Create a new invoice"""
     db = get_database()
     
-    # Validate user exists by auth0_id (not ObjectId validation)
-    # Auth0 IDs look like "auth0|123456" or "google-oauth2|123456"
-    user = db.users.find_one({"auth0_id": invoice.userId})
+    # Validate user ID format
+    if not ObjectId.is_valid(invoice.userId):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+    
+    # Validate user exists (MongoDB will handle ObjectId conversion)
+    user = db.users.find_one({"_id": ObjectId(invoice.userId)})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -115,27 +123,38 @@ async def create_invoice(invoice: InvoiceCreate):
         if not client.get("userId"):
             db.clients.update_one(
                 {"_id": ObjectId(invoice.clientId)},
-                {"$set": {"userId": invoice.userId}}
+                {"$set": {"userId": ObjectId(invoice.userId)}}
             )
     
     # Auto-generate invoice number if not provided
     if not invoice.invoiceNumber:
-        # Get user's last invoice number using auth0_id
+        # Get user's last invoice number
         last_number = user.get("lastInvoiceNumber", 1000)
         invoice.invoiceNumber = f"INV-{last_number + 1}"
         
         # Update user's last invoice number
         db.users.update_one(
-            {"auth0_id": invoice.userId},
+            {"_id": ObjectId(invoice.userId)},
             {"$set": {"lastInvoiceNumber": last_number + 1}}
         )
     
     # Insert invoice
     invoice_dict = invoice.model_dump(exclude_unset=True)
+    # Convert userId to ObjectId
+    if invoice_dict.get("userId"):
+        invoice_dict["userId"] = ObjectId(invoice_dict["userId"])
+    # Convert clientId to ObjectId if provided and not empty
+    if invoice_dict.get("clientId") and invoice_dict["clientId"].strip():
+        invoice_dict["clientId"] = ObjectId(invoice_dict["clientId"])
+    # Convert jobId to ObjectId if provided and not empty
+    if invoice_dict.get("jobId") and invoice_dict["jobId"].strip():
+        invoice_dict["jobId"] = ObjectId(invoice_dict["jobId"])
     result = db.invoices.insert_one(invoice_dict)
     
-    # Return created invoice
+    # Return created invoice - convert ObjectId fields to strings for response
     created_invoice = db.invoices.find_one({"_id": result.inserted_id})
+    if created_invoice:
+        created_invoice = convert_objectid_to_str(created_invoice)
     return created_invoice
 
 @router.get("/", response_model=List[Invoice])
@@ -156,13 +175,29 @@ async def get_invoices(
     
     query = {}
     if user_id:
-        query["userId"] = user_id
+        # Convert user_id string to ObjectId for query
+        if ObjectId.is_valid(user_id):
+            query["userId"] = ObjectId(user_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
     if client_id:
-        query["clientId"] = client_id
+        # Convert client_id string to ObjectId for query
+        if ObjectId.is_valid(client_id):
+            query["clientId"] = ObjectId(client_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid client ID format"
+            )
     if status_filter:
         query["status"] = status_filter
     
     invoices = list(db.invoices.find(query).skip(skip).limit(limit))
+    # Convert ObjectId fields to strings for response
+    invoices = [convert_objectid_to_str(inv) for inv in invoices]
     return invoices
 
 @router.get("/{invoice_id}", response_model=Invoice)
@@ -183,6 +218,8 @@ async def get_invoice(invoice_id: str):
             detail="Invoice not found"
         )
     
+    # Convert ObjectId fields to strings for response
+    invoice = convert_objectid_to_str(invoice)
     return invoice
 
 @router.put("/{invoice_id}", response_model=Invoice)
@@ -204,6 +241,32 @@ async def update_invoice(invoice_id: str, invoice_update: InvoiceUpdate):
             detail="No fields to update"
         )
     
+    # Convert userId, clientId, jobId to ObjectId if present in update data
+    if update_data.get("userId"):
+        if ObjectId.is_valid(update_data["userId"]):
+            update_data["userId"] = ObjectId(update_data["userId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
+    if update_data.get("clientId") and update_data["clientId"].strip():
+        if ObjectId.is_valid(update_data["clientId"]):
+            update_data["clientId"] = ObjectId(update_data["clientId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid client ID format"
+            )
+    if update_data.get("jobId") and update_data["jobId"].strip():
+        if ObjectId.is_valid(update_data["jobId"]):
+            update_data["jobId"] = ObjectId(update_data["jobId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid job ID format"
+            )
+    
     result = db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": update_data}
@@ -216,6 +279,8 @@ async def update_invoice(invoice_id: str, invoice_update: InvoiceUpdate):
         )
     
     updated_invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    if updated_invoice:
+        updated_invoice = convert_objectid_to_str(updated_invoice)
     return updated_invoice
 
 @router.delete("/{invoice_id}", response_model=MessageResponse)
@@ -263,10 +328,11 @@ async def get_invoice_details(invoice_id: str):
     # Convert ObjectId and datetime fields to strings for JSON serialization
     invoice = convert_objectid_to_str(invoice)
     
-    # Get user details (using auth0_id since userId is now Auth0 ID)
+    # Get user details
     user_details = None
     if invoice.get("userId"):
-        user = db.users.find_one({"auth0_id": invoice["userId"]})
+        # MongoDB will handle ObjectId conversion
+        user = db.users.find_one({"_id": ObjectId(invoice["userId"])})
         if user:
             user_details = {
                 "_id": str(user["_id"]),

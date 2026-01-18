@@ -1,20 +1,47 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Dict, Any
 from bson import ObjectId
+from datetime import datetime
 
 from ..models import Client, ClientCreate, ClientUpdate, MessageResponse
 from ..database import get_database
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
+def convert_objectid_to_str(doc):
+    """Convert ObjectId fields to strings for JSON serialization"""
+    if doc is None:
+        return None
+    if isinstance(doc, dict):
+        result = {}
+        for key, value in doc.items():
+            if isinstance(value, ObjectId):
+                result[key] = str(value)
+            elif isinstance(value, datetime):
+                result[key] = value.isoformat()
+            elif isinstance(value, dict):
+                result[key] = convert_objectid_to_str(value)
+            elif isinstance(value, list):
+                result[key] = [convert_objectid_to_str(item) for item in value]
+            else:
+                result[key] = value
+        return result
+    return doc
+
 @router.post("/", response_model=Client, status_code=status.HTTP_201_CREATED)
 async def create_client(client: ClientCreate):
     """Create a new client"""
     db = get_database()
     
-    # Verify user exists by auth0_id (not ObjectId validation)
-    # Auth0 IDs look like "auth0|123456" or "google-oauth2|123456"
-    user = db.users.find_one({"auth0_id": client.userId})
+    # Validate user ID format
+    if not ObjectId.is_valid(client.userId):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+    
+    # Verify user exists (MongoDB will handle ObjectId conversion)
+    user = db.users.find_one({"_id": ObjectId(client.userId)})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -23,10 +50,15 @@ async def create_client(client: ClientCreate):
     
     # Insert client
     client_dict = client.model_dump(exclude_unset=True)
+    # Convert userId to ObjectId
+    if client_dict.get("userId"):
+        client_dict["userId"] = ObjectId(client_dict["userId"])
     result = db.clients.insert_one(client_dict)
     
-    # Return created client
+    # Return created client - convert ObjectId fields to strings for response
     created_client = db.clients.find_one({"_id": result.inserted_id})
+    if created_client:
+        created_client = convert_objectid_to_str(created_client)
     return created_client
 
 @router.get("/", response_model=List[Client])
@@ -36,9 +68,18 @@ async def get_clients(user_id: str = None, skip: int = 0, limit: int = 100):
     
     query = {}
     if user_id:
-        query["userId"] = user_id
+        # Convert user_id string to ObjectId for query
+        if ObjectId.is_valid(user_id):
+            query["userId"] = ObjectId(user_id)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
     
     clients = list(db.clients.find(query).skip(skip).limit(limit))
+    # Convert ObjectId fields to strings for response
+    clients = [convert_objectid_to_str(client) for client in clients]
     return clients
 
 @router.get("/{client_id}", response_model=Client)
@@ -59,6 +100,8 @@ async def get_client(client_id: str):
             detail="Client not found"
         )
     
+    # Convert ObjectId fields to strings for response
+    client = convert_objectid_to_str(client)
     return client
 
 @router.put("/{client_id}", response_model=Client)
@@ -80,6 +123,16 @@ async def update_client(client_id: str, client_update: ClientUpdate):
             detail="No fields to update"
         )
     
+    # Convert userId to ObjectId if present in update data
+    if update_data.get("userId"):
+        if ObjectId.is_valid(update_data["userId"]):
+            update_data["userId"] = ObjectId(update_data["userId"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID format"
+            )
+    
     result = db.clients.update_one(
         {"_id": ObjectId(client_id)},
         {"$set": update_data}
@@ -92,6 +145,8 @@ async def update_client(client_id: str, client_update: ClientUpdate):
         )
     
     updated_client = db.clients.find_one({"_id": ObjectId(client_id)})
+    if updated_client:
+        updated_client = convert_objectid_to_str(updated_client)
     return updated_client
 
 @router.delete("/{client_id}", response_model=MessageResponse)
