@@ -7,6 +7,7 @@ import Profile from './pages/Profile';
 import Calendar from './pages/Calendar';
 import Jobs from './pages/Jobs';
 import Onboarding from './pages/Onboarding';
+import AgentChat from './pages/Agent';
 import './App.css';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/agent" element={<AgentChat />} />
             </Routes>
           </main>
         </div>
