@@ -18,6 +18,13 @@ class Settings:
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
     
+    # Email Configuration
+    EMAIL_HOST: str = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT: int = int(os.getenv("EMAIL_PORT", "587"))
+    EMAIL_USER: str = os.getenv("EMAIL_USER", "")
+    EMAIL_PASSWORD: str = os.getenv("EMAIL_PASSWORD", "")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "PersonalCFO")
+    
     def validate(self):
         """Validate that required settings are present"""
         if not self.MONGODB_URI or self.MONGODB_URI == "":

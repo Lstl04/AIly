@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from ..models import Invoice, InvoiceCreate, InvoiceUpdate, MessageResponse
 from ..database import get_database
+from ..email_service import send_invoice_email, send_payment_reminder
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -51,11 +52,57 @@ def check_and_update_overdue_invoices(user_id: str = None):
                 
                 # If due date is in the past, update status to overdue
                 if due_date < today:
+                    was_sent = invoice.get("status") == "sent"
+                    
                     db.invoices.update_one(
                         {"_id": invoice["_id"]},
                         {"$set": {"status": "overdue"}}
                     )
                     updated_count += 1
+                    
+                    # Send payment reminder if invoice was just marked as overdue
+                    if was_sent:
+                        try:
+                            # Get user (sender) details
+                            user = None
+                            if invoice.get("userId"):
+                                user = db.users.find_one({"_id": ObjectId(invoice["userId"])})
+                            
+                            # Get client (recipient) details
+                            client = None
+                            if invoice.get("clientId"):
+                                client = db.clients.find_one({"_id": ObjectId(invoice["clientId"])})
+                            
+                            if user and client and client.get("email"):
+                                # Prepare invoice data for reminder
+                                invoice_data = {
+                                    "invoiceNumber": invoice.get("invoiceNumber", ""),
+                                    "dueDate": invoice.get("dueDate"),
+                                    "total": invoice.get("total", 0),
+                                    "clientName": client.get("name", ""),
+                                    "to": {
+                                        "name": client.get("name", ""),
+                                        "email": client.get("email", "")
+                                    }
+                                }
+                                
+                                # Prepare business info
+                                business_info = {
+                                    "businessName": user.get("businessName", ""),
+                                    "email": user.get("businessEmail", "")
+                                }
+                                
+                                # Send reminder email
+                                reminder_result = send_payment_reminder(
+                                    invoice_data=invoice_data,
+                                    business_info=business_info,
+                                    client_email=client.get("email")
+                                )
+                                
+                                if not reminder_result.get("success"):
+                                    print(f"[WARNING] Failed to send payment reminder: {reminder_result.get('error')}")
+                        except Exception as e:
+                            print(f"[ERROR] Exception while sending payment reminder: {e}")
             except Exception as e:
                 # Log error but continue processing other invoices
                 print(f"Error processing invoice {invoice.get('_id')} for overdue check: {e}")
@@ -322,6 +369,17 @@ async def update_invoice(invoice_id: str, invoice_update: InvoiceUpdate):
                 detail="Invalid job ID format"
             )
     
+    # Get invoice before update to check if status is changing to 'sent'
+    invoice_before = db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    if not invoice_before:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+    
+    was_draft = invoice_before.get("status") == "draft"
+    is_being_sent = update_data.get("status") == "sent"
+    
     result = db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": update_data}
@@ -336,6 +394,57 @@ async def update_invoice(invoice_id: str, invoice_update: InvoiceUpdate):
     updated_invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
     if updated_invoice:
         updated_invoice = convert_objectid_to_str(updated_invoice)
+    
+    # Send email if status changed from draft to sent
+    if was_draft and is_being_sent:
+        try:
+            # Get user (sender) details
+            user = None
+            if updated_invoice.get("userId"):
+                user = db.users.find_one({"_id": ObjectId(updated_invoice["userId"])})
+            
+            # Get client (recipient) details
+            client = None
+            if updated_invoice.get("clientId"):
+                client = db.clients.find_one({"_id": ObjectId(updated_invoice["clientId"])})
+            
+            if user and client and client.get("email"):
+                # Prepare invoice data for email
+                invoice_data = {
+                    "invoiceNumber": updated_invoice.get("invoiceNumber", ""),
+                    "dueDate": updated_invoice.get("dueDate"),
+                    "lineItems": updated_invoice.get("lineItems", []),
+                    "total": updated_invoice.get("total", 0),
+                    "clientName": client.get("name", ""),
+                    "to": {
+                        "name": client.get("name", ""),
+                        "email": client.get("email", ""),
+                        "address": client.get("address", "")
+                    }
+                }
+                
+                # Prepare business info
+                business_info = {
+                    "businessName": user.get("businessName", ""),
+                    "email": user.get("businessEmail", ""),
+                    "phone": user.get("businessPhone", ""),
+                    "address": user.get("businessAddress", "")
+                }
+                
+                # Send email (async, don't block the response)
+                email_result = send_invoice_email(
+                    invoice_data=invoice_data,
+                    business_info=business_info,
+                    client_email=client.get("email")
+                )
+                
+                if not email_result.get("success"):
+                    print(f"[WARNING] Failed to send invoice email: {email_result.get('error')}")
+                    # Don't fail the invoice update if email fails
+        except Exception as e:
+            print(f"[ERROR] Exception while sending invoice email: {e}")
+            # Don't fail the invoice update if email fails
+    
     return updated_invoice
 
 @router.delete("/{invoice_id}", response_model=MessageResponse)
@@ -494,4 +603,85 @@ async def get_printable_invoice(invoice_id: str):
         "lineItems": invoice.get("lineItems", []),
         "total": invoice.get("total", 0)
     }
+
+
+@router.post("/{invoice_id}/send-reminder", response_model=MessageResponse)
+async def send_invoice_reminder(invoice_id: str):
+    """Send a payment reminder email for an overdue invoice"""
+    db = get_database()
+    
+    if not ObjectId.is_valid(invoice_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid invoice ID format"
+        )
+    
+    # Get invoice
+    invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    if not invoice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+    
+    # Get user (sender) details
+    user = None
+    if invoice.get("userId"):
+        user = db.users.find_one({"_id": ObjectId(invoice["userId"])})
+    
+    # Get client (recipient) details
+    client = None
+    if invoice.get("clientId"):
+        client = db.clients.find_one({"_id": ObjectId(invoice["clientId"])})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found for this invoice"
+        )
+    
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found for this invoice"
+        )
+    
+    if not client.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Client email not found. Cannot send reminder."
+        )
+    
+    # Prepare invoice data for reminder
+    invoice_data = {
+        "invoiceNumber": invoice.get("invoiceNumber", ""),
+        "dueDate": invoice.get("dueDate"),
+        "total": invoice.get("total", 0),
+        "clientName": client.get("name", ""),
+        "to": {
+            "name": client.get("name", ""),
+            "email": client.get("email", "")
+        }
+    }
+    
+    # Prepare business info
+    business_info = {
+        "businessName": user.get("businessName", ""),
+        "email": user.get("businessEmail", "")
+    }
+    
+    # Send reminder email
+    reminder_result = send_payment_reminder(
+        invoice_data=invoice_data,
+        business_info=business_info,
+        client_email=client.get("email")
+    )
+    
+    if not reminder_result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=reminder_result.get("error", "Failed to send reminder email")
+        )
+    
+    return {"message": f"Payment reminder sent successfully to {client.get('email')}"}
 

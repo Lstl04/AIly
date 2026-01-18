@@ -16,7 +16,6 @@ function Sidebar({ user }) {
     overdue: 0
   });
   const [clientCounts, setClientCounts] = useState({
-    all: 0,
     active: 0,
     archived: 0
   });
@@ -114,16 +113,6 @@ function Sidebar({ user }) {
       
       if (!userId) return;
 
-      // Fetch all clients
-      const allResponse = await fetch(
-        `http://127.0.0.1:8000/api/clients/?user_id=${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
       // Fetch active clients
       const activeResponse = await fetch(
         `http://127.0.0.1:8000/api/clients/?user_id=${userId}&archived=false`,
@@ -144,12 +133,10 @@ function Sidebar({ user }) {
         }
       );
 
-      const allCount = allResponse.ok ? (await allResponse.json()).length : 0;
       const activeCount = activeResponse.ok ? (await activeResponse.json()).length : 0;
       const archivedCount = archivedResponse.ok ? (await archivedResponse.json()).length : 0;
 
       setClientCounts({
-        all: allCount,
         active: activeCount,
         archived: archivedCount
       });
@@ -262,14 +249,6 @@ function Sidebar({ user }) {
           
           {clientsExpanded && (
             <div className="section-content">
-              <button 
-                className={`sidebar-item ${location.pathname === '/clients/all' ? 'active' : ''}`}
-                onClick={() => navigate('/clients/all')}
-              >
-                <span className="item-icon">📋</span>
-                <span className="item-label">All Clients</span>
-                <span className="item-count">{clientCounts.all}</span>
-              </button>
               <button 
                 className={`sidebar-item ${location.pathname === '/clients/active' ? 'active' : ''}`}
                 onClick={() => navigate('/clients/active')}

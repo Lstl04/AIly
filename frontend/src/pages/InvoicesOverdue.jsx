@@ -115,6 +115,40 @@ function InvoicesOverdue() {
     }
   };
 
+  const handleSendReminder = async (invoiceId) => {
+    if (!confirm('Send a payment reminder email to the client?')) {
+      return;
+    }
+
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://personalcfo.com"
+        }
+      });
+
+      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/send-reminder`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to send reminder');
+      }
+
+      const result = await response.json();
+      alert(result.message || 'Payment reminder sent successfully!');
+
+    } catch (error) {
+      console.error('Error sending reminder:', error);
+      alert('Failed to send reminder. ' + (error.message || 'Please try again.'));
+    }
+  };
+
   if (loading) {
     return (
       <div className="invoices-container">
@@ -193,7 +227,10 @@ function InvoicesOverdue() {
                 >
                   <span>✅</span> Mark Paid
                 </button>
-                <button className="invoice-action-btn">
+                <button 
+                  className="invoice-action-btn"
+                  onClick={() => handleSendReminder(invoice._id)}
+                >
                   📧 Remind
                 </button>
               </div>

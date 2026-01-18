@@ -803,12 +803,15 @@ function InvoicesDrafts() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send invoice');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to send invoice');
       }
 
+      const result = await response.json();
+      
       // Remove from local state (it will appear in Sent section)
       setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
-      alert('Invoice sent successfully!');
+      alert('Invoice sent successfully! An email has been sent to the client.');
 
     } catch (error) {
       console.error('Error sending invoice:', error);
@@ -980,6 +983,139 @@ function InvoicesDrafts() {
               </div>
             ) : (
             <form onSubmit={handleCreateInvoice} className="invoice-form">
+              {/* Job Information */}
+              <div className="form-section">
+                <h3>Job Details</h3>
+                
+                {!showCreateNewJob ? (
+                  <>
+                    <div className="form-group">
+                      <label>Select Job (Optional)</label>
+                      <select
+                        name="selectedJobId"
+                        value={formData.selectedJobId}
+                        onChange={async (e) => {
+                          handleInputChange(e);
+                          // If a job is selected, fetch its details to populate title and auto-select client
+                          if (e.target.value) {
+                            const selectedJob = pendingJobs.find(j => (j._id || j.id) === e.target.value);
+                            if (selectedJob) {
+                              const updates = {
+                                selectedJobId: e.target.value,
+                                jobTitle: selectedJob.title || formData.jobTitle
+                              };
+                              
+                              // If job has a clientId, automatically select that client
+                              if (selectedJob.clientId) {
+                                const clientId = selectedJob.clientId.toString();
+                                // Check if this client exists in the clients list
+                                const clientExists = clients.some(c => (c._id || c.id) === clientId);
+                                if (clientExists) {
+                                  updates.selectedClientId = clientId;
+                                  setShowCreateNewClient(false); // Make sure we're not in "create new" mode
+                                } else {
+                                  // If client not in list, fetch it or log a warning
+                                  console.warn('Job has clientId but client not found in clients list:', clientId);
+                                }
+                              }
+                              
+                              setFormData(prev => ({ ...prev, ...updates }));
+                            }
+                          } else {
+                            // If job is deselected, clear the job-related fields
+                            setFormData(prev => ({
+                              ...prev,
+                              selectedJobId: '',
+                              jobTitle: ''
+                            }));
+                          }
+                        }}
+                        disabled={loadingJobs}
+                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
+                      >
+                        <option value="">-- Select a job (optional) --</option>
+                        {loadingJobs ? (
+                          <option value="" disabled>Loading jobs...</option>
+                        ) : pendingJobs.length === 0 ? (
+                          <option value="" disabled>No pending jobs found</option>
+                        ) : (
+                          pendingJobs.map((job) => (
+                            <option key={job._id || job.id} value={job._id || job.id}>
+                              {job.title || 'Untitled Job'} {job.clientId ? '(with client)' : ''}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn-create-new-job"
+                      onClick={() => {
+                        setShowCreateNewJob(true);
+                        setFormData(prev => ({ ...prev, selectedJobId: '' }));
+                      }}
+                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      + Create New Job
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Job Title *</label>
+                      <input
+                        type="text"
+                        name="jobTitle"
+                        value={formData.jobTitle}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Website Building"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Job Description</label>
+                      <input
+                        type="text"
+                        name="jobDescription"
+                        value={formData.jobDescription}
+                        onChange={handleInputChange}
+                        placeholder="e.g., built a full stack website"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn-cancel-new-job"
+                      onClick={() => {
+                        setShowCreateNewJob(false);
+                        setFormData(prev => ({
+                          ...prev,
+                          jobTitle: '',
+                          jobDescription: ''
+                        }));
+                      }}
+                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      Cancel - Select Existing Job
+                    </button>
+                  </>
+                )}
+
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label>Hours Worked</label>
+                  <input
+                    type="number"
+                    name="hoursWorked"
+                    value={formData.hoursWorked}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.5"
+                  />
+                  <small>Rate: {formatCurrency(userProfile?.hourlyRate || 0)}/hr = {formatCurrency((formData.hoursWorked || 0) * (userProfile?.hourlyRate || 0))}</small>
+                </div>
+              </div>
+
               {/* Client Information */}
               <div className="form-section">
                 <h3>Client Information</h3>
@@ -1086,118 +1222,6 @@ function InvoicesDrafts() {
                   </>
                 )}
               </div>
-
-              {/* Job Information */}
-              <div className="form-section">
-                <h3>Job Details</h3>
-                
-                {!showCreateNewJob ? (
-                  <>
-                    <div className="form-group">
-                      <label>Select Job (Optional)</label>
-                      <select
-                        name="selectedJobId"
-                        value={formData.selectedJobId}
-                        onChange={(e) => {
-                          handleInputChange(e);
-                          // If a job is selected, fetch its details to populate title
-                          if (e.target.value) {
-                            const selectedJob = pendingJobs.find(j => (j._id || j.id) === e.target.value);
-                            if (selectedJob) {
-                              setFormData(prev => ({
-                                ...prev,
-                                selectedJobId: e.target.value,
-                                jobTitle: selectedJob.title || prev.jobTitle
-                              }));
-                            }
-                          }
-                        }}
-                        disabled={loadingJobs}
-                        style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '14px' }}
-                      >
-                        <option value="">-- Select a job (optional) --</option>
-                        {loadingJobs ? (
-                          <option value="" disabled>Loading jobs...</option>
-                        ) : pendingJobs.length === 0 ? (
-                          <option value="" disabled>No pending jobs found</option>
-                        ) : (
-                          pendingJobs.map((job) => (
-                            <option key={job._id || job.id} value={job._id || job.id}>
-                              {job.title || 'Untitled Job'} {job.clientId ? '(with client)' : ''}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn-create-new-job"
-                      onClick={() => {
-                        setShowCreateNewJob(true);
-                        setFormData(prev => ({ ...prev, selectedJobId: '' }));
-                      }}
-                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #4a90e2', borderRadius: '8px', background: 'white', color: '#4a90e2', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      + Create New Job
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label>Job Title *</label>
-                      <input
-                        type="text"
-                        name="jobTitle"
-                        value={formData.jobTitle}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Website Building"
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Job Description</label>
-                      <input
-                        type="text"
-                        name="jobDescription"
-                        value={formData.jobDescription}
-                        onChange={handleInputChange}
-                        placeholder="e.g., built a full stack website"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn-cancel-new-job"
-                      onClick={() => {
-                        setShowCreateNewJob(false);
-                        setFormData(prev => ({
-                          ...prev,
-                          jobTitle: '',
-                          jobDescription: ''
-                        }));
-                      }}
-                      style={{ width: '100%', padding: '10px 20px', marginTop: '12px', border: '2px solid #999', borderRadius: '8px', background: 'white', color: '#666', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      Cancel - Select Existing Job
-                    </button>
-                  </>
-                )}
-
-                <div className="form-group" style={{ marginTop: '20px' }}>
-                  <label>Hours Worked</label>
-                  <input
-                    type="number"
-                    name="hoursWorked"
-                    value={formData.hoursWorked}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="0.5"
-                  />
-                  <small>Rate: {formatCurrency(userProfile?.hourlyRate || 0)}/hr = {formatCurrency((formData.hoursWorked || 0) * (userProfile?.hourlyRate || 0))}</small>
-                </div>
-              </div>
-            
 
               {/* Additional Items */}
               <div className="form-section">
