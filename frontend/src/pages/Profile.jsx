@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import './Profile.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 function Profile() {
   const { getAccessTokenSilently } = useAuth0();
   const [loading, setLoading] = useState(true);
@@ -27,13 +29,13 @@ function Profile() {
           authorizationParams: { audience: "https://personalcfo.com" }
         });
 
-        const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch(`${API_URL}/users/profile`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
         if (!response.ok) throw new Error('Failed to fetch profile');
         const userData = await response.json();
@@ -73,7 +75,7 @@ function Profile() {
         authorizationParams: { audience: "https://personalcfo.com" }
       });
 
-      const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

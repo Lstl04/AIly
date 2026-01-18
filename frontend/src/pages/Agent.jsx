@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import './Agent.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const AgentChat = () => {
   const { getAccessTokenSilently } = useAuth0();
   const [messages, setMessages] = useState([
@@ -79,7 +81,7 @@ How can I help you grow your business today?`
 
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://127.0.0.1:8000/api/agent/chat/voice', {
+      const response = await fetch(`${API_URL}/agent/chat/voice`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
@@ -120,7 +122,7 @@ How can I help you grow your business today?`
 
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://127.0.0.1:8000/api/agent/chat', {
+      const response = await fetch(`${API_URL}/agent/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

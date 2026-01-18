@@ -20,7 +20,7 @@ app = FastAPI(
 # CORS middleware - allows frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=["https://louis-dev.d2607r98kov957.amplifyapp.com/"],  # React dev servers
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

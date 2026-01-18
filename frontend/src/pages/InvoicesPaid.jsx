@@ -3,6 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import './Invoices.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 function InvoicesPaid() {
   const { user, getAccessTokenSilently } = useAuth0();
   const [invoices, setInvoices] = useState([]);
@@ -26,7 +28,7 @@ function InvoicesPaid() {
       });
 
       // Get user profile to get MongoDB _id
-      const profileResponse = await fetch('http://127.0.0.1:8000/api/users/profile', {
+      const profileResponse = await fetch(`${API_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -39,7 +41,7 @@ function InvoicesPaid() {
       const profile = await profileResponse.json();
       const userId = profile._id;
       
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=paid`, {
+      const response = await fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=paid`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -84,7 +86,7 @@ function InvoicesPaid() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/details`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -120,7 +122,7 @@ function InvoicesPaid() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/details`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

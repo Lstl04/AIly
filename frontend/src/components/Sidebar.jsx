@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 function Sidebar({ user }) {
   const { logout, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ function Sidebar({ user }) {
   const fetchData = async () => {
     try {
       const token = await getAccessTokenSilently();
-      const profileRes = await fetch('http://127.0.0.1:8000/api/users/profile', { 
+      const profileRes = await fetch(`${API_URL}/users/profile`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       if (!profileRes.ok) return;
@@ -40,12 +42,12 @@ function Sidebar({ user }) {
       if (!userId) return;
 
       const [drafts, sent, paid, overdue, active, archived] = await Promise.all([
-        fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=draft`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=sent`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=paid`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=overdue`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`http://127.0.0.1:8000/api/clients/?user_id=${userId}&archived=false`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`http://127.0.0.1:8000/api/clients/?user_id=${userId}&archived=true`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=draft`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=sent`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=paid`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=overdue`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/clients/?user_id=${userId}&archived=false`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
+        fetch(`${API_URL}/clients/?user_id=${userId}&archived=true`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
       ]);
 
       setCounts({

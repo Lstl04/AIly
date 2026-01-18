@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import './AIly.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const AIly = () => {
   const { getAccessTokenSilently } = useAuth0();
   const [isOpen, setIsOpen] = useState(false);
@@ -60,7 +62,7 @@ const AIly = () => {
     formData.append('file', blob, 'recording.wav');
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://127.0.0.1:8000/api/agent/chat/voice', {
+      const response = await fetch(`${API_URL}/agent/chat/voice`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -80,7 +82,7 @@ const AIly = () => {
     setIsLoading(true);
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://127.0.0.1:8000/api/agent/chat', {
+      const response = await fetch(`${API_URL}/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ message: messageText })

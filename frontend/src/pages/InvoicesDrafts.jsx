@@ -3,6 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { generatePDF } from '../utils/pdfGenerator';
 import './Invoices.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 // Helper function to create Google Calendar event
 const createGoogleCalendarEvent = async (job) => {
   try {
@@ -132,7 +134,7 @@ function InvoicesDrafts() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/clients/?user_id=${userProfile._id}&archived=false`, {
+      const response = await fetch(`${API_URL}/clients/?user_id=${userProfile._id}&archived=false`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -155,7 +157,7 @@ function InvoicesDrafts() {
     setLoadingJobs(true);
     try {
       // Fetch all jobs and filter for pending/in_progress
-      const response = await fetch(`http://127.0.0.1:8000/api/jobs/?user_id=${userProfile._id}`);
+      const response = await fetch(`${API_URL}/jobs/?user_id=${userProfile._id}`);
       if (response.ok) {
         const allJobs = await response.json();
         // Filter for pending and in_progress jobs
@@ -177,7 +179,7 @@ function InvoicesDrafts() {
         }
       });
 
-      const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -211,7 +213,7 @@ function InvoicesDrafts() {
         setError('User profile not loaded');
         return;
       }
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/?user_id=${userId}&status_filter=draft`, {
+      const response = await fetch(`${API_URL}/invoices/?user_id=${userId}&status_filter=draft`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -304,7 +306,7 @@ function InvoicesDrafts() {
 
           console.log('Creating client with data:', clientData);
 
-          const clientResponse = await fetch('http://127.0.0.1:8000/api/clients/', {
+          const clientResponse = await fetch(`${API_URL}/clients/`, {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -361,7 +363,7 @@ function InvoicesDrafts() {
         // Add location if client has address
         if (createdClientId) {
           try {
-            const clientResponse = await fetch(`http://127.0.0.1:8000/api/clients/${createdClientId}`, {
+            const clientResponse = await fetch(`${API_URL}/clients/${createdClientId}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -379,7 +381,7 @@ function InvoicesDrafts() {
 
         console.log('Creating job with data:', jobData);
 
-        const jobResponse = await fetch('http://127.0.0.1:8000/api/jobs/', {
+        const jobResponse = await fetch(`${API_URL}/jobs/`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -433,7 +435,7 @@ function InvoicesDrafts() {
       // If job is selected, fetch job details to get title
       if (formData.selectedJobId && !showCreateNewJob) {
         try {
-          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${formData.selectedJobId}`, {
+          const jobResponse = await fetch(`${API_URL}/jobs/${formData.selectedJobId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -465,7 +467,7 @@ function InvoicesDrafts() {
       let invoiceResponse;
       if (editingInvoiceId) {
         // Update existing invoice
-        invoiceResponse = await fetch(`http://127.0.0.1:8000/api/invoices/${editingInvoiceId}`, {
+        invoiceResponse = await fetch(`${API_URL}/invoices/${editingInvoiceId}`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -475,7 +477,7 @@ function InvoicesDrafts() {
         });
       } else {
         // Create new invoice
-        invoiceResponse = await fetch('http://127.0.0.1:8000/api/invoices/', {
+        invoiceResponse = await fetch(`${API_URL}/invoices/`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -504,7 +506,7 @@ function InvoicesDrafts() {
           console.log('Invoice data:', invoice);
           
           // Fetch the job to get its current data and check for calendar event
-          const jobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
+          const jobResponse = await fetch(`${API_URL}/jobs/${jobId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -552,7 +554,7 @@ function InvoicesDrafts() {
           
           console.log('Updating job status to completed:', jobId, updatePayload);
           
-          const updateJobResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
+          const updateJobResponse = await fetch(`${API_URL}/jobs/${jobId}`, {
             method: 'PUT',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -573,7 +575,7 @@ function InvoicesDrafts() {
               console.log('✓ Job status confirmed as completed. Job ID:', updatedJob._id || updatedJob.id);
               
               // Double-check by fetching the job again
-              const verifyResponse = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}`, {
+              const verifyResponse = await fetch(`${API_URL}/jobs/${jobId}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
@@ -628,7 +630,7 @@ function InvoicesDrafts() {
       });
 
       // Fetch invoice details
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/details`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -761,7 +763,7 @@ function InvoicesDrafts() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -790,7 +792,7 @@ function InvoicesDrafts() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}/details`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/details`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -823,7 +825,7 @@ function InvoicesDrafts() {
         }
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/invoices/${invoiceId}`, {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

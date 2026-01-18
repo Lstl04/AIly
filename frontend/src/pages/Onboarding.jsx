@@ -3,6 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import './Onboarding.css'; 
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 function Onboarding() {
   const { getAccessTokenSilently, user } = useAuth0();
   const navigate = useNavigate();
@@ -52,7 +54,7 @@ function Onboarding() {
       });
 
       // Note: formData already contains personalEmail, so it will be sent automatically
-      const response = await fetch('http://127.0.0.1:8000/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
